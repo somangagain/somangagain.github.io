@@ -780,6 +780,8 @@ function showRecap(){
   document.getElementById('recapOverlay').classList.remove('hidden');
 }
 
+document.getElementById('nextBtn').addEventListener('click', ()=>{ ensureAudio(); playClick(); nextQuestion(); });
+
 renderGroupChoices('startGroupChoices', (idx) => startGroup(idx));
 </script>
 </body>
