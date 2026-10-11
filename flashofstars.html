@@ -171,7 +171,7 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
 <main class="wrap">
   <header class="top">
     <h1>별빛 섬광</h1>
-    <p id="ver">v0.25</p>
+    <p id="ver">v0.26</p>
   </header>
 
   <div class="stage" id="stage">
@@ -247,7 +247,7 @@ const SK={sung:'집중 포격',gu:'전탄 발사',ok:'긴급 수리',heon:'보�
 const TRD={scout:'회피',mirage:'회피',spore:'매 턴 재생'};
 const tr=(s,k)=>s[k]||(TY[s.t]&&TY[s.t][k])||0;
 const SHIPTECH={cruiser:'h0',sphere:'h0',tide:'h0',cyl:'h1',frost:'h1',bird:'h1',mirage:'h1',boulder:'h1',spore:'h1',storm:'h1',green:'h2',steel:'h2',glacier:'h2',ember:'h2',bastion:'h2',titan:'h3'};
-const SKD={sung:'힘을 모아 강한 적 1기에 1.5배 피해 · 보호막 10% 무시',gu:'적 전체 큰 피해',ok:'아군 전체 회복·상태 해제',heon:'아군 전체 1회 방어',
+const SKD={sung:'힘을 모아 강한 적 1기에 최종 피해의 2배 · 보호막 10% 무시',gu:'적 전체 큰 피해',ok:'아군 전체 회복·상태 해제',heon:'아군 전체 1회 방어',
   cruiser:'적 전체 피해·20% 기절',cyl:'아군 전체 회복',sphere:'아군 전체 흡수막',bird:'적 전체 관통 피해 ×2·화상',green:'강한 적 2기 내구도 절반',frost:'적 전체 실명',
   steel:'적 전체 피해 ×2',titan:'적 전체 큰 피해',raider:'적 1기 큰 피해·자금 약탈',tide:'가장 약한 아군 크게 회복',storm:'적 전체 관통 피해·30% 기절',
   glacier:'아군 전체 1회 방어·상태 해제',ember:'적 전체 피해·화상',bastion:'아군 전체 큰 흡수막',scout:'강한 적에게 표적(받는 피해 +50%)',
@@ -1047,6 +1047,11 @@ async function orbCast(s,list,col){const c=ctr(s),side=B.A.includes(s)?1:-1;
   B.fx.push({k:'orb',x:c.x+side*58,y:c.y,tg:list.map(ctr),col,arc:s.t==='gu',t0:now()});
   if(snd&&audio())try{tone(180,ac.currentTime,AD(500)/1000,'sawtooth',.05,sfxG,900)}catch(e){}
   await sleep(AD(800));beep(420,.12,'square',.04)}
+/* charge an orb, then fire one thick beam from the orb itself; the orb shrinks away afterwards */
+async function chargeBeam(s,tg,col){const c=ctr(s),q=ctr(tg),side=B.A.includes(s)?1:-1;s.actAt=now();
+  B.fx.push({k:'obeam',x:c.x+side*58,y:c.y,tx:q.x,ty:q.y,col,t0:now()});
+  if(snd&&audio())try{tone(180,ac.currentTime,AD(500)/1000,'sawtooth',.05,sfxG,900)}catch(e){}
+  await sleep(AD(500));beep(240,.3,'sawtooth',.06);B.shake=now()+160}
 function boom(s){const c=ctr(s);boomAt(c.x,c.y)}
 function boomAt(x,y){const c={x,y};B.shake=now()+260;B.fx.push({k:'boom',x:c.x,y:c.y,t0:now(),bits:Array.from({length:22},()=>[rnd(0,6.28),rnd(.2,1),ri(0,3)])});beep(70,.25,'sawtooth',.06)}
 function fl(s,txt,col){const c=ctr(s);B.fx.push({k:'txt',x:c.x+ri(-10,10),y:c.y-12,txt,col,t0:now()})}
@@ -1101,7 +1106,9 @@ async function act(s,foes,friends,focus,d){
     const guard=(col,fn)=>{link(s,fr,col);for(const f of fr){fn(f);fxOn('shield',f,col)}beep(990,.15)};
     const top=()=>lf.reduce((a,b)=>b.hp>a.hp?b:a);
     switch(sk){
-      case'sung':{const t2=top();await orbCast(s,[t2],'#ffc857');if(t2.hp>0){beam(s,t2,9);hit(t2,wd(s)*1.5,.1,s)}break}
+      case'sung':{const t2=top();await chargeBeam(s,t2,'#ffc857');
+        if(t2.hp>0){let v=wd(s)*rnd(.8,1.2);if(s.w===4&&Math.random()<.2){v*=1.8;fl(s,'치명타','#ffcc55')}else if(S.tech.t1&&Math.random()<.1){v*=1.5;fl(s,'치명타','#ffcc55')}
+          hit(t2,v*2,.1,s);if(s.w===6&&t2.hp>0&&Math.random()<.35)afflict(t2,'burn',3,'화상','#ff9955')}break}
       case'gu':await orbCast(s,lf,'#ff9030');for(const e of lf)hit(e,ri(35,40),false,s);break;
       case'ok':cleanse(fr);heal(30);break;
       case'heon':case'barrier':guard('#77ddff',f=>f.thin=true);break;
@@ -1239,7 +1246,7 @@ function drawBattle(t){
   for(const s of stars){g.fillStyle=s[2]>1?'#fff':'#9aa0c8';g.fillRect(Math.round(((s[0]-t*s[3]/1000)%640+640)%640),s[1],s[2],s[2])}
   if(B.boss){const sz=216;g.globalAlpha=.42;g.drawImage(planetCv(B.boss,24),150-sz/2,165-sz/2,sz,sz);g.globalAlpha=1}
   B.A.forEach((s,i)=>drawShip(s,i,false,t));B.E.forEach((s,i)=>drawShip(s,i,true,t));
-  const af=2/spd,LIFE={beam:300,boom:560,cast:420,txt:760,orb:800,heal:700,shield:600,link:380};B.fx=B.fx.filter(f=>(t-f.t0)/af<LIFE[f.k]);
+  const af=2/spd,LIFE={beam:300,boom:560,cast:420,txt:760,orb:800,obeam:1000,heal:700,shield:600,link:380};B.fx=B.fx.filter(f=>(t-f.t0)/af<LIFE[f.k]);
   for(const f of B.fx){const a=(t-f.t0)/af;
     if(f.k==='beam'){const ti=f.tier,k=Math.min(1,a/LIFE.beam),al=1-k,dx=f.x2-f.x1,dy=f.y2-f.y1,Ln=Math.hypot(dx,dy)||1,ux=dx/Ln,uy=dy/Ln,px=-uy,py=ux,e=Math.min(1,k*1.6);
       const line=(w,col,alpha)=>{g.strokeStyle=col;g.lineWidth=w;g.globalAlpha=alpha;g.beginPath();g.moveTo(f.x1,f.y1);g.lineTo(f.x2,f.y2);g.stroke()};
@@ -1274,6 +1281,17 @@ function drawBattle(t){
         for(const q of f.tg){for(let n=0;n<4;n++){const ee=Math.pow(Math.max(0,k-n*.07),2),bx=f.x+(q.x-f.x)*ee,by=f.y+(q.y-f.y)*ee-(f.arc?Math.sin(ee*Math.PI)*18:0),r=7-n*1.5;
             g.globalAlpha=1-n*.22;g.fillStyle=n?f.col:'#fff';g.beginPath();g.arc(bx,by,r,0,6.2832);g.fill();if(!n){g.fillStyle=f.col;g.globalAlpha=.35;g.beginPath();g.arc(bx,by,12,0,6.2832);g.fill()}}}
         g.globalAlpha=1}}
+    else if(f.k==='obeam'){g.fillStyle=f.col;
+      const orb=r=>{g.fillStyle=f.col;g.globalAlpha=.28;g.beginPath();g.arc(f.x,f.y,r*1.9,0,6.2832);g.fill();g.globalAlpha=1;g.beginPath();g.arc(f.x,f.y,r,0,6.2832);g.fill();
+        g.fillStyle='#fff';g.beginPath();g.arc(f.x,f.y,r*.5,0,6.2832);g.fill()};
+      if(a<500){const k=a/500,r=4+k*14+Math.sin(t/40)*1.5;
+        for(let n=0;n<10;n++){const an=n*.628+t/300,dd=r+(1-k)*46*(.5+(n%3)*.25);g.globalAlpha=.4+k*.6;g.fillRect(Math.round(f.x+Math.cos(an)*dd)-2,Math.round(f.y+Math.sin(an)*dd)-2,4,4)}
+        orb(r)}
+      else{const b=a-500,al=Math.max(0,1-b/380),r=18*Math.max(0,1-b/500);
+        if(al>0){g.lineCap='round';for(const[w,col,m]of[[30,f.col,.3],[15,f.col,1],[6,'#fff',1]]){g.strokeStyle=col;g.lineWidth=w*(.6+.4*al);g.globalAlpha=al*m;g.beginPath();g.moveTo(f.x,f.y);g.lineTo(f.tx,f.ty);g.stroke()}
+          g.lineCap='butt';g.globalAlpha=al;g.fillStyle='#fff';g.beginPath();g.arc(f.tx,f.ty,14+(1-al)*16,0,6.2832);g.fill()}
+        g.globalAlpha=1;if(r>.5)orb(r)}
+      g.globalAlpha=1}
     else if(f.k==='heal'){const c=ctr(f.s),k=a/700;g.strokeStyle='#77ff77';g.lineWidth=3;g.globalAlpha=(1-k)*.8;g.beginPath();g.ellipse(c.x,c.y,58+k*20,22+k*10,0,0,6.2832);g.stroke();
       g.fillStyle='#b8ffb8';for(let n=0;n<6;n++){const x=c.x-55+n*22,y=c.y+22-k*56-(n%2)*10;g.globalAlpha=Math.max(0,1-k*1.1);g.fillRect(x-1,y-5,3,11);g.fillRect(x-5,y-1,11,3)}g.globalAlpha=1}
     else if(f.k==='shield'){const c=ctr(f.s),k=a/600,sc=1.7-.7*Math.min(1,k*2),al=Math.min(1,k*3)*(1-Math.max(0,(k-.6)/.4));
