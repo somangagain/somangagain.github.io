@@ -193,7 +193,8 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
       <p>방향키나 WASD로 함대를 움직이고 숫자키로 명령을 내립니다. 지도를 눌러도 한 칸씩 이동합니다. 전투 중 스페이스로 속도를 바꿉니다. 진행 상황은 이 브라우저에 자동 저장되고, 파일로 내보내 다른 기기에서 불러올 수도 있습니다.</p>
       <div class="row">
         <button id="bHelp">도움말</button>
-        <button id="bSnd">소리 켜짐</button>
+        <button id="bSnd">효과음 켜짐</button>
+        <button id="bBgm">음악 켜짐</button>
         <button id="bFull">전체 화면</button>
         <button id="bSave">파일로 저장</button>
         <button id="bLoad">파일 불러오기</button>
@@ -231,27 +232,35 @@ const TY={
   green:{n:'가시함',hp:130,price:1000},bird:{n:'불새함',hp:120,price:800},
   frost:{n:'빙결함',hp:115,price:650},steel:{n:'강철함',hp:140,price:1100},
   titan:{n:'거신함',hp:180,price:2000},
+  scout:{n:'정찰기',hp:45,price:70,ev:.25},raider:{n:'약탈함',hp:90,price:220},tide:{n:'해류함',hp:105,price:450},
+  mirage:{n:'신기루함',hp:85,price:500,ev:.3},boulder:{n:'암석함',hp:150,price:600},spore:{n:'포자함',hp:100,price:650,regen:8},
+  storm:{n:'뇌운함',hp:95,price:700},glacier:{n:'빙산함',hp:135,price:900},ember:{n:'화산함',hp:110,price:950},bastion:{n:'요새함',hp:165,price:1300},
   efighter:{n:'투항기',hp:65,price:150}
 };
-const SK={sung:'집중 포격',gu:'전탄 발사',ok:'긴급 수리',heon:'보호막 전개',cruiser:'푸른 벼락',cyl:'생명의 빛',sphere:'보호의 벽',bird:'폭발의 검',green:'백도의 지배자',frost:'실명의 장막',steel:'예리한 검격',titan:'파괴자의 검'};
-const SHIPTECH={cruiser:'h0',sphere:'h0',cyl:'h1',frost:'h1',bird:'h1',green:'h2',steel:'h2',titan:'h3'};
-const SKD={cruiser:'적 전체 피해',cyl:'아군 전체 회복',sphere:'아군 전체 흡수막',bird:'적 전체 관통 피해 ×2',green:'강한 적 2기 내구도 절반',frost:'적 전체 명중률 저하',steel:'적 전체 피해 ×2',titan:'적 전체 큰 피해'};
+const SK={sung:'집중 포격',gu:'전탄 발사',ok:'긴급 수리',heon:'보호막 전개',cruiser:'푸른 벼락',cyl:'생명의 빛',sphere:'보호의 벽',bird:'폭발의 검',green:'백도의 지배자',frost:'실명의 장막',steel:'예리한 검격',titan:'파괴자의 검',
+  raider:'기습 약탈',tide:'생명의 회귀',storm:'천둥의 창',glacier:'신성한 방패',ember:'금빛 검풍',bastion:'철벽 방진'};
+const TRD={scout:'회피 기동',mirage:'회피 기동',spore:'매 턴 재생',boulder:'두꺼운 장갑'};
+const tr=(s,k)=>s[k]||(TY[s.t]&&TY[s.t][k])||0;
+const SHIPTECH={cruiser:'h0',sphere:'h0',tide:'h0',cyl:'h1',frost:'h1',bird:'h1',mirage:'h1',boulder:'h1',spore:'h1',storm:'h1',green:'h2',steel:'h2',glacier:'h2',ember:'h2',bastion:'h2',titan:'h3'};
+const SKD={cruiser:'적 전체 피해',cyl:'아군 전체 회복',sphere:'아군 전체 흡수막',bird:'적 전체 관통 피해 ×2',green:'강한 적 2기 내구도 절반',frost:'적 전체 명중률 저하',steel:'적 전체 피해 ×2',titan:'적 전체 큰 피해',raider:'적 1기 큰 피해',tide:'가장 약한 아군 회복',storm:'적 전체 관통 피해·실명',glacier:'아군 전체 1회 방어',ember:'적 전체 피해',bastion:'아군 전체 큰 흡수막',
+  scout:'적의 공격을 잘 피한다',mirage:'적의 공격을 잘 피한다',spore:'매 턴 내구도 8 회복',boulder:'내구도가 높다'};
 const ESK={volley:'붉은 검풍',repair:'긴급 정비',barrier:'결정 장막',snipe:'주포 저격'};
 /* planet types: colours, colony trait, and the ship model its yard builds */
 const PT={
-  ocean:{n:'해양형',c:['#3f78ff','#2f9be0'],d:'충성도 +1/월 · 교역 +50%',loy:1,trade:1.5,ship:'cruiser',names:['물빛 요람','파랑새','깊은 푸름','조개별']},
-  rock:{n:'암석형',c:['#a08670','#8c8c96'],d:'광산 +50%',mine:1.5,ship:'cruiser',names:['잠든 거인','바람언덕','회색 등대','돌무지']},
-  gas:{n:'가스형',c:['#e0a050','#c880d0'],d:'연구소 효과 2배',lab:2,ship:'cyl',names:['노을바다','구름요람','호박빛 돛','천둥노래']},
-  ice:{n:'얼음형',c:['#bfe6ff','#9fd0f0'],d:'반란 확률 절반',calm:.5,ship:'frost',names:['서리꽃','흰 숨결','겨울잠','유리호수']},
-  lava:{n:'용암형',c:['#d0401a','#b03030'],d:'광산 +100% · 충성도 -1/월',mine:2,loy:-1,ship:'bird',names:['잿불','붉은 맥박','화로별','불씨의 강']},
-  desert:{n:'사막형',c:['#e0b860','#d09a50'],d:'교역 +50%',trade:1.5,ship:'sphere',names:['모래시계','금빛 사구','마른 달','신기루']},
-  jungle:{n:'정글형',c:['#2fbf4a','#58a83a'],d:'충성도 +2/월',loy:2,ship:'green',names:['이끼숲','초록비','덩굴정원','반딧불']},
-  metal:{n:'금속형',c:['#9aa4c0','#b0a890'],d:'건설비 -25%',build:.75,ship:'steel',names:['무쇠섬','톱니성','은빛 격자','녹슨 왕관']},
-  asteroid:{n:'소행성',c:['#9a6a5a'],d:'교역 +50%',trade:1.5,ship:'pirate',names:['까마귀 둥지','검은 닻','떠돌이 암초']},
+  ocean:{n:'해양형',c:['#3f78ff','#2f9be0'],d:'충성도 +1/월 · 교역 +50%',loy:1,trade:1.5,ship:['cruiser','tide'],names:['물빛 요람','파랑새','깊은 푸름','조개별']},
+  rock:{n:'암석형',c:['#a08670','#8c8c96'],d:'광산 +50%',mine:1.5,ship:['cruiser','boulder'],names:['잠든 거인','바람언덕','회색 등대','돌무지']},
+  gas:{n:'가스형',c:['#e0a050','#c880d0'],d:'연구소 효과 2배',lab:2,ship:['cyl','storm'],names:['노을바다','구름요람','호박빛 돛','천둥노래']},
+  ice:{n:'얼음형',c:['#bfe6ff','#9fd0f0'],d:'반란 확률 절반',calm:.5,ship:['frost','glacier'],names:['서리꽃','흰 숨결','겨울잠','유리호수']},
+  lava:{n:'용암형',c:['#d0401a','#b03030'],d:'광산 +100% · 충성도 -1/월',mine:2,loy:-1,ship:['bird','ember'],names:['잿불','붉은 맥박','화로별','불씨의 강']},
+  desert:{n:'사막형',c:['#e0b860','#d09a50'],d:'교역 +50%',trade:1.5,ship:['sphere','mirage'],names:['모래시계','금빛 사구','마른 달','신기루']},
+  jungle:{n:'정글형',c:['#2fbf4a','#58a83a'],d:'충성도 +2/월',loy:2,ship:['green','spore'],names:['이끼숲','초록비','덩굴정원','반딧불']},
+  metal:{n:'금속형',c:['#9aa4c0','#b0a890'],d:'건설비 -25%',build:.75,ship:['steel','bastion'],names:['무쇠섬','톱니성','은빛 격자','녹슨 왕관']},
+  asteroid:{n:'소행성',c:['#9a6a5a'],d:'교역 +50%',trade:1.5,ship:['pirate','raider'],names:['까마귀 둥지','검은 닻','떠돌이 암초']},
   hole:{n:'블랙홀',c:['#b9a8ff'],d:'',names:['심연의 왕좌']}
 };
 const SZ=['소형','중형','대형'],TAX=['낮음','보통','높음'];
-const SHOPN={fighter:'전투기',cruiser:'순양함',pirate:'해적선',cyl:'원통 전함',sphere:'구형 전함',green:'가시 전함',bird:'불새 전함',frost:'빙결 전함',steel:'강철 전함',titan:'거신 전함'};
+const SHOPN={fighter:'전투기',cruiser:'순양함',pirate:'해적선',cyl:'원통 전함',sphere:'구형 전함',green:'가시 전함',bird:'불새 전함',frost:'빙결 전함',steel:'강철 전함',titan:'거신 전함',
+  scout:'정찰기',raider:'약탈함',tide:'해류 전함',mirage:'신기루 전함',boulder:'암석 전함',spore:'포자 전함',storm:'뇌운 전함',glacier:'빙산 전함',ember:'화산 전함',bastion:'요새 전함'};
 const FAC={
   mine:{n:'광산',cost:300,d:'수입 +60/월'},
   trade:{n:'교역소',cost:350,d:'수입 +40/월 · 충성도 +1 · 중고 거래'},
@@ -282,7 +291,7 @@ const TECH=[];
     .forEach((a,i)=>TECH.push({id:a[0],n:a[1],x:i,y:4,req:i?['e'+(i-1)]:[],cost:a[2],exp:a[3],d:a[4]}));
   [['c0','채굴 공학',300,15,'모든 광산 수입 +25%'],['c1','교역망',400,30,'모든 교역소 수입 +25%'],['c2','식민 행정학',500,50,'모든 식민지 충성도 +1/월'],['c3','건축 공학',700,75,'건설비 -20% · 시설 자리 +1']]
     .forEach((a,i)=>TECH.push({id:a[0],n:a[1],x:i,y:5,req:i?['c'+(i-1)]:[],cost:a[2],exp:a[3],d:a[4]}));
-  [['h0','중형 선체',250,10,'순양함·구형 전함 구입 가능'],['h1','대형 선체',600,40,'원통·빙결·불새 전함 구입 가능'],['h2','거함 설계',1000,80,'가시·강철 전함 구입 가능'],['h3','기함 건조',1500,120,'모든 조선소에서 거신 전함 구입 가능']]
+  [['h0','중형 선체',250,10,'중형 전함 구입 가능 (순양함·구형·해류)'],['h1','대형 선체',600,40,'대형 전함 7종 구입 가능'],['h2','거함 설계',1000,80,'거함 5종 구입 가능'],['h3','기함 건조',1500,120,'모든 조선소에서 거신 전함 구입 가능']]
     .forEach((a,i)=>TECH.push({id:a[0],n:a[1],x:i,y:6,req:i?['h'+(i-1)]:[],cost:a[2],exp:a[3],d:a[4]}));})();
 const TB=Object.fromEntries(TECH.map(t=>[t.id,t]));
 const COLS=17,ROWS=12,CELL=24,OX=6,OY=11;
@@ -328,9 +337,9 @@ function setState(st){S=st;PL=S.pl;for(const p of PL)p.c=PT[p.type].c[p.seed%PT[
 const KEY='sevenstars-v2',SETKEY='sevenstars-set';
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{return sanitize(JSON.parse(localStorage.getItem(KEY)))}catch(e){}return null}
-let snd=true,spd=1;
-try{const o=JSON.parse(localStorage.getItem(SETKEY));if(o){snd=o.snd!==false;spd=[1,2,4,8].includes(o.spd)?o.spd:1}}catch(e){}
-function saveSet(){try{localStorage.setItem(SETKEY,JSON.stringify({snd,spd}))}catch(e){}}
+let snd=true,bgm=true,spd=1;
+try{const o=JSON.parse(localStorage.getItem(SETKEY));if(o){snd=o.snd!==false;bgm=o.bgm!==false;spd=[1,2,4,8].includes(o.spd)?o.spd:1}}catch(e){}
+function saveSet(){try{localStorage.setItem(SETKEY,JSON.stringify({snd,bgm,spd}))}catch(e){}}
 const wn=s=>s.w>=0?W[s.w]:'기본포', sn=s=>s.sh>=0?SH[s.sh]:'보호막 없음', wd=s=>s.w>=0?WD[s.w]:10;
 const reserve=()=>['gu','ok','heon'].filter(k=>!S.joined[k]).length;
 const canAdd=()=>S.fleet.length<8-reserve();
@@ -362,10 +371,52 @@ const totalInc=()=>PL.filter(owned).reduce((a,p)=>a+inc(p),0);
 const sign=v=>(v>=0?'+':'')+v;
 
 /* ---------- sound ---------- */
-let ac=null;
-function beep(f,d=.06,type='square',v=.035){if(!snd)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();
-  const o=ac.createOscillator(),ga=ac.createGain();o.type=type;o.frequency.value=f;ga.gain.value=v*2;
-  ga.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(ga);ga.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+let ac=null,sfxG=null,musG=null,noiseBuf=null;
+function audio(){if(ac)return ac;try{ac=new(window.AudioContext||window.webkitAudioContext)();
+    sfxG=ac.createGain();sfxG.connect(ac.destination);musG=ac.createGain();musG.gain.value=bgm?.55:0;musG.connect(ac.destination);
+    noiseBuf=ac.createBuffer(1,Math.floor(ac.sampleRate*.5),ac.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}catch(e){ac=null}
+  return ac}
+function tone(f,t,d,type,v,dest,f2){const o=ac.createOscillator(),ga=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);
+  ga.gain.setValueAtTime(v,t);ga.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(ga);ga.connect(dest);o.start(t);o.stop(t+d+.02)}
+function noise(t,d,v,dest,hp){const s=ac.createBufferSource(),ga=ac.createGain(),fl=ac.createBiquadFilter();s.buffer=noiseBuf;fl.type=hp?'highpass':'lowpass';fl.frequency.value=hp||900;
+  ga.gain.setValueAtTime(v,t);ga.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(fl);fl.connect(ga);ga.connect(dest);s.start(t);s.stop(t+d+.02)}
+function beep(f,d=.06,type='square',v=.035){if(!snd||!audio())return;try{tone(f,ac.currentTime,d,type,v*2,sfxG)}catch(e){}}
+function jingle(fs,dt=.09,type='square',v=.05){if(!snd||!audio())return;try{fs.forEach((f,i)=>tone(f,ac.currentTime+i*dt,dt*1.7,type,v,sfxG))}catch(e){}}
+const sfx={
+  click(){beep(1100,.025,'square',.011)},
+  move(){if(!snd||!audio())return;try{const t=ac.currentTime;tone(85,t,.17,'sawtooth',.035,sfxG,190);noise(t,.15,.035,sfxG)}catch(e){}},
+  coin(){jingle([1319,1760],.06,'square',.035)},
+  win(){jingle([523,659,784,1047,1319],.1,'square',.05)},
+  lose(){jingle([392,330,262,196],.2,'triangle',.08)},
+  alarm(){jingle([660,440,660,440],.11,'sawtooth',.04)},
+  learn(){jingle([784,988,1175,1568],.08,'triangle',.08)}};
+/* background music: a small step sequencer */
+const mtof=m=>440*Math.pow(2,(m-69)/12),_=null;
+const MAPCH=[[57,60,64],[53,57,60],[48,52,55],[55,59,62]];
+const MAPMEL=[76,0,0,74,72,0,69,0, 72,0,0,69,0,0,65,0, 67,0,72,0,76,0,0,74, 71,0,0,0,74,0,71,0,
+              81,0,0,79,76,0,72,0, 77,0,76,0,72,0,69,0, 79,0,0,76,0,72,0,0, 74,0,71,0,67,0,0,0];
+const BP=[[0,_,3,_,7,_,3,_,0,_,7,10,12,_,10,7],[0,_,4,_,7,_,4,_,12,_,11,7,4,_,7,_],[0,_,4,_,7,_,9,_,12,_,9,7,4,_,2,_],[0,3,7,12,15,_,12,_,10,_,7,_,3,_,-2,_]];
+function bt(s,t,roots,boss){const bar=Math.floor(s/16)%4,st=s%16,r=roots[bar];
+  if(st%2===0)tone(mtof(r+(st===6||st===14?12:0)),t,.13,'sawtooth',.05,musG);
+  const iv=(boss?[BP[0],BP[3],BP[0],BP[3]]:BP)[bar][st];if(iv!==null)tone(mtof(r+24+iv),t,.12,'square',.028,musG);
+  if(st%4===0)tone(130,t,.12,'sine',.14,musG,40);
+  if(st%8===4)noise(t,.09,.05,musG,1500);
+  if(st%2===1)noise(t,.03,.014,musG,6000)}
+const TR={
+  map:{dt:60/96/2,play(s,t){const ch=MAPCH[Math.floor(s/8)%4],st=s%8;
+    tone(mtof(ch[[0,1,2,1,0,1,2,1][st]]+12),t,.28,'triangle',.045,musG);
+    if(st===0)tone(mtof(ch[0]-12),t,1.1,'sine',.09,musG);if(st===4)tone(mtof(ch[0]-5),t,.5,'sine',.05,musG);
+    const m=MAPMEL[s%64];if(m)tone(mtof(m),t,.55,'sine',.06,musG)}},
+  battle:{dt:60/138/4,play(s,t){bt(s,t,[40,36,38,40],false)}},
+  boss:{dt:60/150/4,play(s,t){bt(s,t,[40,41,43,39],true)}}};
+const mus={name:'map',step:0,next:0};
+function setMusic(n){if(mus.name===n)return;mus.name=n;mus.step=0;mus.next=0}
+setInterval(()=>{if(!ac||!bgm||!mus.name||ac.state!=='running')return;const T=TR[mus.name];
+  if(mus.next<ac.currentTime)mus.next=ac.currentTime+.06;
+  try{while(mus.next<ac.currentTime+.3){T.play(mus.step,mus.next);mus.next+=T.dt;mus.step++}}catch(e){}},90);
+const wake=()=>{if(audio()&&ac.state==='suspended')ac.resume().catch(()=>{})};
+document.addEventListener('pointerdown',wake,true);document.addEventListener('keydown',wake,true);
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('button:not(:disabled)'))sfx.click()},true);
 
 /* ---------- sprites (44x16 art in a 46x18 canvas with 1px outline) ---------- */
 const cache={};
@@ -415,6 +466,25 @@ function mkSprite(type,tint){
     case'green':hull({len:34,under:10,bridge:[18],fins:[6,14,24],stripe:28,acc:'#3c6'});break;
     case'frost':hull({len:30,under:10,bridge:[16],fins:[10,22],stripe:24,acc:'#7fe0ff',body:'#a8c4dc',dark:'#56748c',light:'#eaf6ff',glow:'#aef'});break;
     case'steel':hull({len:38,under:26,bridge:[12,22],fins:[5],stripe:30,acc:'#ffd23b',body:'#7c8498',dark:'#3e4456',light:'#b4bcd0',guns:[16,28]});break;
+    case'scout':hull({len:10,fins:[3],stripe:7,acc:'#7fe0ff'});break;
+    case'tide':hull({len:26,under:8,bridge:[14],stripe:20,acc:'#7fe0ff',body:'#6a9ed6',dark:'#34587e',light:'#c4e2ff'});break;
+    case'storm':hull({len:28,under:10,bridge:[16],fins:[8,20],stripe:24,acc:'#ffe060',body:'#8a7ab0',dark:'#463a66',light:'#c8bce8',glow:'#fe6'});break;
+    case'ember':hull({len:32,under:16,bridge:[18],fins:[6],stripe:26,acc:'#ffe060',body:'#a03a20',dark:'#4a1a12',light:'#ff9a50',glow:'#fa3',guns:[12]});break;
+    case'mirage':hull({len:24,bridge:[14],fins:[18],stripe:10,acc:'#ffffff',body:'#d8b870',dark:'#8a6a34',light:'#fff0c0'});break;
+    case'raider':hull({len:20,under:6,body:'#7a6a8c',dark:'#3d3350',light:'#a99bc0',fins:[5,14],stripe:16,acc:'#e33',glow:'#f80',guns:[10]});break;
+    case'glacier':flame=null;dia(24,7.5,18,7.5,'#bfe6ff');dia(8,5,5,3,'#eaf6ff');dia(8,10,5,3,'#9fd0f0');break;
+    case'boulder':flame='#fa6';
+      for(let i=0;i<44;i++)for(let j=0;j<16;j++){const dx=(i-24)/17,dy=(j-7.5)/6.5;
+        if(dx*dx+dy*dy+(hash(i,j)%10)/60<1)R(i,j,1,1,hash(i+3,j)<14?'#4a4640':dy<-.3?'#b0a898':dy<.3?'#8a8478':'#5e5a52')}
+      R(34,6,3,2,'#7fe0ff');break;
+    case'spore':{flame=null;const col='#4ac090';
+      for(const k of[0,1,2]){const yy=[4,8,11][k];for(let i=3;i<17;i++)R(i,yy+Math.round(Math.sin(i*.9+k*2)),1,1,shade(col,.6))}
+      for(let i=0;i<44;i++)for(let j=0;j<16;j++){const dx=(i-27)/11,dy=(j-7.5)/5.5;
+        if(dx*dx+dy*dy+(hash(i,j)%10)/70<1)R(i,j,1,1,hash(i+5,j)<12?'#ffe060':shade(col,dy<-.3?1.25:dy<.3?.95:.6))}
+      R(34,6,2,2,'#ffffff');R(35,7,1,1,'#000000');break}
+    case'bastion':{const col='#8a94b0';
+      R(6,3,30,10,shade(col,.6));R(6,3,30,1,shade(col,1.3));R(6,12,30,1,shade(col,.3));R(4,5,2,6,shade(col,.35));R(36,5,3,6,shade(col,.85));
+      for(let k=9;k<34;k+=4)R(k,6,2,2,(k>>2)%2?'#ffc857':'#7fe0ff');R(9,9,24,1,shade(col,.35));R(14,1,8,2,shade(col,.8));R(22,13,8,2,shade(col,.8));break}
     case'titan':hull({len:38,under:28,bridge:[10,20,28],fins:[5,33],stripe:24,acc:'#ffc857',body:'#b8a070',dark:'#5a4a2a',light:'#f0deb0',glow:'#fc6',guns:[14,30]});break;
     case'efighter':hull({len:16,body:'#8c8a94',dark:'#4a4854',light:'#c2c0cc',fins:[6],stripe:11,acc:tint,glow:'#f55'});break;
     case'cyl':flame=null;
@@ -495,7 +565,7 @@ function fit(){const c=mq.matches,w=c&&mode==='map'?420:640,h=c?(mode==='map'?31
   if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;g.imageSmoothingEnabled=false}
   scr.classList.toggle('compact',c)}
 mq.addEventListener('change',fit);
-function setMode(m){mode=m;const b=m==='battle';stat.hidden=b;cmd.hidden=b;bbar.hidden=!b;fit()}
+function setMode(m){mode=m;const b=m!=='map';stat.hidden=b;cmd.hidden=b;bbar.hidden=m!=='battle';fit()}
 let toastT=0;
 function toast(t){toastEl.textContent=t;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('on'),2000)}
 
@@ -593,7 +663,7 @@ function listBox(title,items,note='',text='',cls=''){return new Promise(res=>{
   keyFn=k=>{if((k==='Escape'||k==='0')&&!cls)done(-1);else if(/^[1-9]$/.test(k)){const i=+k-1;if(items[i]&&!items[i].off)done(i)}else if(cls&&k==='Enter')done(0);return true};})}
 function fleetBox(prompt,pickable){return new Promise(res=>{
   const f=S.fleet,ok=s=>!pickable||pickable(s);
-  openDlg(`<div class="win full"><div class="fleet">`+f.map((s,i)=>`<button class="card ${ok(s)?'':'dim'}" data-i="${i}">${pickable&&ok(s)?`<kbd>${i+1}</kbd>`:''}<canvas width="138" height="54"></canvas><b>${s.n}</b><i>${icon('w',s.w)}${wn(s)}</i><i>${icon('s',s.sh)}${sn(s)}</i><small>${SK[s.t]||'스킬 없음'}</small><em style="--v:${Math.round(s.hp/s.max*100)}%;--c:${shade(hpCol(s.hp/s.max),.55)}">${s.hp}/${s.max}</em></button>`).join('')+
+  openDlg(`<div class="win full"><div class="fleet">`+f.map((s,i)=>`<button class="card ${ok(s)?'':'dim'}" data-i="${i}">${pickable&&ok(s)?`<kbd>${i+1}</kbd>`:''}<canvas width="138" height="54"></canvas><b>${s.n}</b><i>${icon('w',s.w)}${wn(s)}</i><i>${icon('s',s.sh)}${sn(s)}</i><small>${SK[s.t]||TRD[s.t]||'스킬 없음'}</small><em style="--v:${Math.round(s.hp/s.max*100)}%;--c:${shade(hpCol(s.hp/s.max),.55)}">${s.hp}/${s.max}</em></button>`).join('')+
     `</div><div class="foot"><span class="note">${prompt}</span><button data-i="-1"><kbd>0</kbd>나가기</button></div></div>`);
   dlg.querySelectorAll('.card canvas').forEach((c,i)=>{const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(sprite(f[i].t,f[i].tint),0,0,138,54)});
   const done=i=>{closeDlg();res(i)};
@@ -605,7 +675,7 @@ function fleetBox(prompt,pickable){return new Promise(res=>{
 const tstate=t=>S.tech[t.id]?'done':t.req.every(r=>S.tech[r])?'open':'lock';
 function learn(t){S.tech[t.id]=true;delete S.prog[t.id];if(S.rsch===t.id)S.rsch=null;
   if(t.id==='e0'||t.id==='e2')for(const s of S.fleet){const m=Math.round(TY[s.t].hp*hpMul());s.hp+=m-s.max;s.max=m}
-  beep(990,.25);toast(`${t.n} 개발 완료 · ${t.d}`)}
+  sfx.learn();toast(`${t.n} 개발 완료 · ${t.d}`)}
 function invest(t){const st=tstate(t);
   if(st==='done')return toast('이미 개발한 기술입니다.');
   if(st==='lock')return toast('먼저 필요한 기술: '+t.req.filter(r=>!S.tech[r]).map(r=>TB[r].n).join(', '));
@@ -680,7 +750,7 @@ async function monthTick(){S.month++;let tot=0,labs=0;const reb=[];
     if(p.role!=='earth'){c.loy=clamp(c.loy+dl(p),0,100);
       if(c.loy<30&&Math.random()<(30-c.loy)*.03*(c.fac.includes('fort')?.5:1)*(T.calm||1)){c.rebel=true;
         const lostF=c.fac.length?FAC[c.fac.splice(ri(0,c.fac.length-1),1)[0]].n:null;reb.push([p,lostF])}}}
-  S.money+=tot;let note='';
+  S.money+=tot;let note='';if(tot>0)sfx.coin();
   const r=S.rsch&&!S.tech[S.rsch]?TB[S.rsch]:null;
   if(r&&labs){S.prog[r.id]=Math.min(100,(S.prog[r.id]||0)+4*labs);if(S.prog[r.id]>=100&&S.exp>=r.exp){learn(r);note=' · '+r.n+' 완성'}}
   if(!note)toast(`${S.month}월 · 수입 +${tot}만원`);
@@ -722,8 +792,8 @@ const CMD={
     if(S.loy>=100)return toast('충성도는 이미 최고입니다.');
     if(S.money<cost)return toast(`월급 ${cost}만원(1척당 20만원)이 부족합니다.`);
     S.money-=cost;S.loy=Math.min(100,S.loy+8);beep(700,.08);toast(`월급 지급 · 충성도 +8% · -${cost}만원`)},
-  async 5(){const p=here(),types=[...new Set(['fighter',PT[p.type].ship,'titan'])],lock=t=>SHIPTECH[t]&&!S.tech[SHIPTECH[t]];
-    for(;;){const i=await listBox('전함구입',types.map(t=>({ic:shipIc(t),label:SHOPN[t],sub:lock(t)?`기술 필요: ${TB[SHIPTECH[t]].n}`:`내구도 ${Math.round(TY[t].hp*hpMul())} · `+(SK[t]?`스킬 ${SK[t]}(${SKD[t]})`:'스킬 없음'),right:TY[t].price+'만원',off:lock(t)||S.money<TY[t].price||!canAdd()})),
+  async 5(){const p=here(),types=[...new Set(['fighter','scout',...PT[p.type].ship,'titan'])],lock=t=>SHIPTECH[t]&&!S.tech[SHIPTECH[t]];
+    for(;;){const i=await listBox('전함구입',types.map(t=>({ic:shipIc(t),label:SHOPN[t],sub:lock(t)?`기술 필요: ${TB[SHIPTECH[t]].n}`:`내구도 ${Math.round(TY[t].hp*hpMul())} · `+(SK[t]?`스킬 ${SK[t]}(${SKD[t]})`:TRD[t]?`특성 ${TRD[t]}(${SKD[t]})`:'스킬 없음'),right:TY[t].price+'만원',off:lock(t)||S.money<TY[t].price||!canAdd()})),
         canAdd()?`자금 ${S.money}만원 · 함대 ${S.fleet.length}/${8-reserve()}척`:'형제들의 자리를 남겨 둬야 합니다 (최대 8척)');
       if(i<0)return;const t=types[i];S.money-=TY[t].price;S.fleet.push(ship(t));ui();beep(600,.1);toast(`${SHOPN[t]} 합류`)}
   },
@@ -788,7 +858,8 @@ async function step(nx,ny){
     S.x=nx;S.y=ny;
     const r=await battle(fl,{boss:p,noFlee:true,intro:`${p.n} 수비 함대와의 결전!`});
     if(r==='win'){S.conq[p.id]=true;p.col={loy:45,tax:1,fac:p.pre?[p.pre]:[],rebel:false};
-      if(p.role==='hq'){await msgBox('진정한 평화여','블랙홀 군단의 본거지가 무너졌습니다.\n하람 4형제는 별들에 평화를 되찾았습니다.\n\n— 끝 —','새 게임');setState(newState());return}
+      if(p.role==='hq'){const sum=`${S.month}월 만에 ${PL.filter(owned).length}개의 별을 품고, 기술 ${techCount()}개를 익혔습니다.`;await cine(ending());
+        await msgBox('진정한 평화여','블랙홀 군단의 본거지가 무너졌습니다.\n하람 4형제는 별들에 평화를 되찾았습니다.\n'+sum+'\n\n— 끝 —','새 은하로');setState(newState());save();await cine(opening());return}
       await msgBox(`${p.n} 점령`,`행성을 손에 넣어 식민지로 삼았습니다.`+(p.pre?`\n${FAC[p.pre].n}이(가) 남아 있습니다.`:'')+'\n정보를 확인하고 내정에서 시설을 지으십시오.')}
     return;
   }
@@ -802,7 +873,7 @@ async function step(nx,ny){
     else if(r==='flee'){S.x=ox;S.y=oy}
     return;
   }
-  S.x=nx;S.y=ny;S.moves++;beep(180,.03,'triangle');
+  S.x=nx;S.y=ny;S.moves++;sfx.move();
   if(S.moves%10===0)S.loy=Math.max(0,S.loy-1);
   if(S.moves%8===0)await monthTick();
   if(p)return;
@@ -861,7 +932,7 @@ async function act(s,foes,friends,focus,d){
       case'sung':{const t2=top();beam(s,t2,9);hit(t2,wd(s)*2.5+20);break}
       case'gu':for(const e of lf){beam(s,e,6);hit(e,ri(35,40))}break;
       case'ok':heal(30);break;
-      case'heon':case'barrier':for(const f of friends)if(f.hp>0)f.thin=true;beep(990,.15);break;
+      case'heon':case'barrier':case'glacier':for(const f of friends)if(f.hp>0)f.thin=true;beep(990,.15);break;
       case'cruiser':for(const e of lf){beam(s,e,1);hit(e,14)}break;
       case'cyl':heal(15);break;
       case'sphere':for(const f of friends)if(f.hp>0)f.wall=25;beep(990,.15);break;
@@ -870,18 +941,23 @@ async function act(s,foes,friends,focus,d){
       case'frost':for(const e of lf){e.blind=2;fl(e,'실명','#aef')}beep(500,.2,'sine');break;
       case'steel':for(const e of lf){beam(s,e,3);hit(e,10);if(e.hp>0)hit(e,10)}break;
       case'titan':for(const e of lf){beam(s,e,7);hit(e,22)}break;
+      case'ember':for(const e of lf){beam(s,e,6);hit(e,18)}break;
+      case'storm':for(const e of lf){beam(s,e,3);hit(e,9,true);if(e.hp>0&&Math.random()<.3){e.blind=2;fl(e,'실명','#aef')}}break;
+      case'tide':{const f=friends.filter(alive).reduce((a,b)=>b.hp/b.max<a.hp/a.max?b:a);f.hp=Math.min(f.max,f.hp+40);fl(f,'+40','#7f7');beep(880,.15);break}
+      case'bastion':for(const f of friends)if(f.hp>0)f.wall=40;beep(990,.15);break;
+      case'raider':beam(s,tg,8);hit(tg,wd(s)*2+10);break;
       case'volley':for(const e of lf){beam(s,e,3);hit(e,6+Math.max(0,s.w),true)}break;
       case'repair':heal(12+2*Math.max(0,s.w));break;
       case'snipe':{const t2=top();beam(s,t2,9);hit(t2,wd(s)*2+15);break}
     }
     await bs(d*2);return}
   beam(s,tg,s.w);
-  const miss=.1+(tg.ev||0)+(s.blind?.45:0);if(s.blind)s.blind--;
+  const miss=.1+tr(tg,'ev')+(s.blind?.45:0);if(s.blind)s.blind--;
   if(Math.random()<miss)fl(tg,'빗나감','#aab');else hit(tg,wd(s)*rnd(.8,1.2));
   await bs(d);
 }
 async function sideTurn(mine,foes,focus,d){for(const s of mine.slice()){if(!foes.some(alive))break;await act(s,foes,mine,focus,d)}
-  let any=false;for(const s of mine)if(s.hp>0&&s.regen&&s.hp<s.max&&foes.some(alive)){const v=Math.min(s.regen,s.max-s.hp);s.hp+=v;fl(s,'+'+v,'#7f7');any=true}
+  let any=false;for(const s of mine)if(s.hp>0&&tr(s,'regen')&&s.hp<s.max&&foes.some(alive)){const v=Math.min(tr(s,'regen'),s.max-s.hp);s.hp+=v;fl(s,'+'+v,'#7f7');any=true}
   if(any)await bs(d)}
 function bask(btns){return new Promise(res=>{
   bb.innerHTML=btns.map((b,i)=>`<button data-i="${i}"><kbd>${i+1}</kbd>${b}</button>`).join('');
@@ -896,7 +972,7 @@ function pickTarget(){return new Promise(res=>{
   keyFn=k=>{const s=B.E[+k-1];if(s&&s.hp>0)done(s);return true};})}
 async function battle(E,o){
   B={A:[...S.fleet],E,fx:[],boss:o.boss,selecting:false,t0:now(),shake:0};place();setMode('battle');
-  bprev.textContent='';bmsg.textContent='';hover=null;beep(520,.12);
+  bprev.textContent='';bmsg.textContent='';hover=null;sfx.alarm();setMusic(o.boss?'boss':'battle');
   say(o.intro||(E[0].lone?`${E[0].n} 한 척이 홀로 나타났다!`:`적 함대 ${E.length}척과 마주쳤다!`));
   let auto=false,res=null,helped=false;const dE=cheb(S.x,S.y,EARTH());
   while(!res){
@@ -926,11 +1002,12 @@ async function battle(E,o){
     await sideTurn(B.A,B.E,focus,d);
     await sideTurn(B.E,B.A,null,d);
   }
+  setMusic(null);if(res==='win')sfx.win();else if(res==='lose')sfx.lose();
   bb.innerHTML='';say(res==='win'?'적 함대를 물리쳤다!':res==='flee'?'전장에서 이탈한다!':'함대가 전멸했다...');
   await sleep(750);
   const lost=S.fleet.filter(s=>s.hp<=0).length;
   S.fleet=S.fleet.filter(alive);S.fleet.forEach(s=>{delete s.thin;delete s.wall;delete s.flash;delete s.dieAt;delete s.hitAt;delete s.actAt;delete s.blind});
-  setMode('map');B=null;ui();
+  setMode('map');setMusic('map');B=null;ui();
   if(!S.fleet.some(s=>BRO.includes(s.t))){
     await msgBox('게임 오버','하람과 형제들의 전함이 모두 격침되었습니다.\n별들은 블랙홀 군단의 손에 넘어갔습니다.','처음부터');
     setState(newState());return'over'}
@@ -991,7 +1068,7 @@ function drawBattle(t){
     if(s){const p=B.pos.get(s),skn=ESK[s.sk]||SK[s.t];
       if(B.selecting&&B.E.includes(s)){g.fillStyle='#ffc857';const x0=p.x-8,y0=p.y-8,x1=p.x+140,y1=p.y+56,L=12;
         for(const[cx,cy,sx,sy]of[[x0,y0,1,1],[x1,y0,-1,1],[x0,y1,1,-1],[x1,y1,-1,-1]]){g.fillRect(sx>0?cx:cx-L,cy-(sy>0?0:2),L,2);g.fillRect(cx-(sx>0?0:2),sy>0?cy:cy-L,2,L)}}
-      const lab=`${s.n} · ${wn(s)} · ${sn(s)}`+(skn?` · ${skn}`:'')+(s.regen?' · 재생':'')+(s.ev?' · 회피':'')+(s.sd?' · 자폭':'');g.font='14px "Do Hyeon",sans-serif';g.textAlign='left';
+      const lab=`${s.n} · ${wn(s)} · ${sn(s)}`+(skn?` · ${skn}`:'')+(tr(s,'regen')?' · 재생':'')+(tr(s,'ev')?' · 회피':'')+(s.sd?' · 자폭':'');g.font='14px "Do Hyeon",sans-serif';g.textAlign='left';
       const w=g.measureText(lab).width+12,tx=Math.max(4,Math.min(636-w,p.x)),ty=Math.max(2,p.y-26);
       g.fillStyle='rgba(14,10,8,.92)';g.fillRect(tx,ty,w,19);g.strokeStyle='#ffc857';g.lineWidth=1;g.strokeRect(tx+.5,ty+.5,w-1,18);
       g.fillStyle='#f1ead6';g.fillText(lab,tx+6,ty+14)}}
@@ -999,17 +1076,72 @@ function drawBattle(t){
   if(t-B.t0<260){g.globalAlpha=1-(t-B.t0)/260;g.fillStyle='#fff';g.fillRect(0,0,640,400);g.globalAlpha=1}
 }
 
+/* ---------- cinematics ---------- */
+let C=null;
+function cineNext(){if(!C)return;C.i++;C.t0=now();if(C.i>=C.scenes.length){const d=C.done;C=null;keyFn=null;setMode('map');d()}}
+function cine(scenes){return new Promise(res=>{setMode('cine');C={scenes,i:0,t0:now(),done:res};
+  keyFn=k=>{if(k==='Escape'){C.i=C.scenes.length;cineNext()}else if(k==='Enter'||k===' ')cineNext();return true}})}
+function spr(type,x,y,sc,flip,t,tint){const im=sprite(type,tint),w=46*sc,h=18*sc;g.save();g.translate(Math.round(x),Math.round(y));if(flip)g.scale(-1,1);
+  if(im.flame){const f=(2+(Math.floor(t/70)%3))*sc;g.fillStyle=im.flame;g.fillRect(-w/2+1.3*sc-f,-1.2*sc,f,2.4*sc)}
+  g.drawImage(im,-w/2,-h/2,w,h);g.restore()}
+function drawCine(t){const H=cv.height,sc=C.scenes[C.i],a=now()-C.t0;if(a>sc.dur){cineNext();return}
+  const k=a/sc.dur;g.fillStyle='#04030a';g.fillRect(0,0,640,400);
+  g.drawImage(nebBat,0,0,640,400);
+  for(const s of stars){g.fillStyle=s[2]>1?'#fff':'#9aa0c8';g.fillRect(Math.round(((s[0]-t*s[3]/2500)%640+640)%640),s[1],s[2],s[2])}
+  sc.draw(a,k,H,t);
+  g.fillStyle='#000';g.fillRect(0,0,640,30);g.fillRect(0,H-44,640,44);
+  g.textAlign='center';g.font='20px "Do Hyeon",sans-serif';g.globalAlpha=Math.min(1,a/700,(sc.dur-a)/500);txt(sc.text||'',320,H-16,'#f5eee2');g.globalAlpha=1;
+  g.font='12px "Do Hyeon",sans-serif';g.textAlign='right';g.fillStyle='#8a7f72';g.fillText('Enter·화면 누르기 다음  ·  Esc 건너뛰기',630,19);
+  const f=Math.min(a/400,(sc.dur-a)/400);if(f<1){g.globalAlpha=1-Math.max(0,f);g.fillStyle='#000';g.fillRect(0,0,640,400);g.globalAlpha=1}
+}
+function bigText(s,y,al,size=54){g.globalAlpha=Math.max(0,Math.min(1,al));g.textAlign='center';g.font=size+'px "Do Hyeon",sans-serif';g.fillStyle='#6a2a40';g.fillText(s,323,y+3);g.fillStyle='#ffc857';g.fillText(s,320,y);g.globalAlpha=1}
+function opening(){const cy=H=>(H-14)/2;
+  return[
+    {dur:5000,text:'고요하던 밤하늘에 낯선 빛이 번졌다.',draw(a,k,H){const r=4+k*46;g.fillStyle='#fff7d0';g.globalAlpha=.9;g.fillRect(450-r,118,r*2,3);g.fillRect(449,119-r,3,r*2);
+      g.globalAlpha=.25;g.beginPath();g.arc(450,119,r*.7,0,6.2832);g.fill();g.globalAlpha=1}},
+    {dur:6500,text:'지구 곁에 열 개의 인공 행성이 모습을 드러냈다.',draw(a,k,H){const y0=cy(H);g.drawImage(planetCv(PL[0],24),320-40,y0-40,80,80);
+      PL.slice(1).forEach((p,i)=>{const on=k*13-i;if(on<=0)return;const an=i*.628-1.2,rx=150+((i%3)*46),x=320+Math.cos(an)*rx,y=y0+Math.sin(an)*(70+(i%2)*26),sz=p.type==='hole'?44:26+p.size*6;
+        g.drawImage(planetCv(p,12),x-sz/2,y-sz/2,sz,sz);if(on<1){g.globalAlpha=1-on;g.fillStyle='#fff';g.beginPath();g.arc(x,y,sz*(.6+on),0,6.2832);g.fill();g.globalAlpha=1}})}},
+    {dur:6500,text:'반란군을 쫓던 둘째 형 마루와 막내 새별은 돌아오지 못했다.',draw(a,k,H,t){const y0=cy(H),x=120+Math.min(k,.5)*320,sh=k>.5?Math.sin(t/30)*2:0;
+      spr('e:legion:b',500,y0-70,3,true,t);
+      if(k>.5){g.strokeStyle='#ff4d3b';g.lineWidth=3;g.globalAlpha=.5+.4*Math.sin(t/60);for(const dy of[-10,46]){g.beginPath();g.moveTo(450,y0-60);g.lineTo(x+20,y0+dy);g.stroke()}g.globalAlpha=1}
+      spr('ok',x+sh,y0-10,2.4,false,t);spr('heon',x-30-sh,y0+46,2.2,false,t)}},
+    {dur:6000,text:'방위군은 움직이지 않았다. 큰형 한울만이 지구 곁을 지키기로 했다.',draw(a,k,H,t){const y0=cy(H);g.drawImage(planetCv(PL[0],24),40,y0-70,168,168);
+      spr('gu',330,y0-34,3,false,t);spr('sung',410-k*30,y0+40,3,true,t)}},
+    {dur:6500,text:'하람의 함대가 별빛을 가르며 출항한다.',draw(a,k,H,t){const y0=cy(H),x=-80+k*k*900;
+      g.fillStyle='#6cf';for(let i=0;i<14;i++){g.globalAlpha=.5-i*.035;g.fillRect(x-70-i*26,y0+30,22,2);g.fillRect(x-150-i*26,y0+72,18,2);g.fillRect(x-130-i*26,y0-6,18,2)}g.globalAlpha=1;
+      spr('sung',x,y0+30,3,false,t);spr('fighter',x-90,y0+72,2.4,false,t);spr('fighter',x-70,y0-6,2.4,false,t);
+      if(k>.45){const f=(k-.45)/.12;if(f<1){g.globalAlpha=1-f;g.fillStyle='#fff';g.fillRect(0,0,640,400);g.globalAlpha=1}bigText('별빛 섬광',y0+10,(k-.45)*6,64)}}}
+  ]}
+function ending(){const hq=HQ(),own=PL.filter(owned),info=`${S.month}월 · 영토 ${own.length} · 기술 ${techCount()}/${TECH.length}`,cy=H=>(H-14)/2;
+  const bits=Array.from({length:40},()=>[rnd(0,6.28),rnd(.2,1),rnd(0,1)]);
+  return[
+    {dur:6000,text:`${hq.n} — 블랙홀 군단의 본거지가 무너진다.`,draw(a,k,H,t){const y0=cy(H),sz=150*(1-k*k*.8),sh=k<.8?Math.sin(t/25)*4*k:0;
+      g.drawImage(planetCv(hq,24),320-sz/2+sh,y0-sz/2,sz,sz);
+      const cols=['#fff7b0','#ffb22e','#f2511b','#b9a8ff'];for(const b of bits){const ph=(k*2+b[2])%1,r=ph*170*b[1];g.fillStyle=cols[Math.floor(b[2]*4)];g.globalAlpha=1-ph;const s=10*(1-ph)+2;g.fillRect(320+Math.cos(b[0])*r-s/2,y0+Math.sin(b[0])*r-s/2,s,s)}
+      g.globalAlpha=1;g.strokeStyle='#fff';g.lineWidth=3;g.globalAlpha=Math.max(0,1-k);g.beginPath();g.arc(320,y0,20+k*260,0,6.2832);g.stroke();g.globalAlpha=1;
+      if(k>.8){g.globalAlpha=(k-.8)*5;g.fillStyle='#fff';g.fillRect(0,0,640,400);g.globalAlpha=1}}},
+    {dur:6000,text:'네 형제는 다시 하나의 함대가 되었다.',draw(a,k,H,t){const y0=cy(H),x=140+k*240;
+      spr('gu',x+60,y0-62,2.6,false,t);spr('sung',x+110,y0-14,2.8,false,t);spr('ok',x+40,y0+36,2.6,false,t);spr('heon',x-30,y0+82,2.4,false,t)}},
+    {dur:6500,text:'별마다 등불이 하나둘 켜졌다.',draw(a,k,H,t){const y0=cy(H);g.drawImage(planetCv(PL[0],24),320-36,y0-36,72,72);
+      PL.slice(1).forEach((p,i)=>{const an=i*.628-1.2,rx=150+((i%3)*46),x=320+Math.cos(an)*rx,y=y0+Math.sin(an)*(70+(i%2)*26),sz=24+p.size*6;
+        g.drawImage(planetCv(p,12),x-sz/2,y-sz/2,sz,sz);
+        if(k*12>i){g.fillStyle='#ffc857';g.globalAlpha=.6+.4*Math.sin(t/200+i);g.fillRect(x-2,y-sz/2-8,4,4);g.globalAlpha=.25;g.beginPath();g.arc(x,y-sz/2-6,9,0,6.2832);g.fill();g.globalAlpha=1}});
+      g.font='16px "Do Hyeon",sans-serif';g.textAlign='center';g.globalAlpha=Math.min(1,k*3);txt(info,320,52,'#d8cbb8');g.globalAlpha=1}},
+    {dur:7000,text:'',draw(a,k,H){const y0=cy(H);bigText('진정한 평화여',y0,k*3,58);bigText('별빛 섬광',y0+56,(k-.3)*3,26)}}
+  ]}
+
 /* ---------- loop and input ---------- */
-function frame(t){if(mode==='battle'&&B)drawBattle(t);else drawMap(t);requestAnimationFrame(frame)}
+function frame(t){if(C)drawCine(t);else if(mode==='battle'&&B)drawBattle(t);else drawMap(t);requestAnimationFrame(frame)}
 function setSpd(v){spd=v;$('bSpd').textContent='속도 ×'+spd;saveSet()}
 document.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey)return;const k=e.key;
   if(mode==='battle'&&e.code==='Space'){e.preventDefault();setSpd(spd>=8?1:spd*2);return}
-  if(keyFn){if(k.length===1||/^Key[A-Z]$/.test(e.code)||['Enter','Escape','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(k)){keyFn(k,e.code);e.preventDefault()}return}
+  if(keyFn){if(k.length===1||/^Key[A-Z]$/.test(e.code)||['Enter','Escape','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(k)){sfx.click();keyFn(k,e.code);e.preventDefault()}return}
   if(mode!=='map'||busy)return;
   const mv={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[k]||{KeyW:[0,-1],KeyS:[0,1],KeyA:[-1,0],KeyD:[1,0]}[e.code];
   if(mv){e.preventDefault();move(mv[0],mv[1])}
-  else if(/^[0-9]$/.test(k)){e.preventDefault();run(+k||10)}
+  else if(/^[0-9]$/.test(k)){e.preventDefault();if(cmds()[+k||10])sfx.click();run(+k||10)}
   else if(k==='F1'){e.preventDefault();help()}
 });
 const cpos=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height}};
@@ -1017,6 +1149,7 @@ cmd.addEventListener('click',e=>{const b=e.target.closest('button[data-n]');if(b
 cv.addEventListener('mousemove',e=>{hover=cpos(e)});
 cv.addEventListener('mouseleave',()=>{hover=null});
 cv.addEventListener('click',e=>{const{x,y}=cpos(e);
+  if(mode==='cine'){cineNext();return}
   if(mode==='battle'){if(targetFn)targetFn(x,y);return}
   if(x>=420||y>=310)return;
   const dx=Math.floor((x-OX)/CELL)-S.x,dy=Math.floor((y-OY)/CELL)-S.y;if(!dx&&!dy)return;
@@ -1024,11 +1157,12 @@ cv.addEventListener('click',e=>{const{x,y}=cpos(e);
 [['pU',0,-1],['pD',0,1],['pL',-1,0],['pR',1,0]].forEach(([id,dx,dy])=>$(id).addEventListener('click',()=>move(dx,dy)));
 $('bHelp').addEventListener('click',help);
 $('bSpd').addEventListener('click',()=>setSpd(spd>=8?1:spd*2));
-$('bSnd').addEventListener('click',e=>{snd=!snd;e.currentTarget.textContent=snd?'소리 켜짐':'소리 꺼짐';saveSet()});
+$('bSnd').addEventListener('click',e=>{snd=!snd;e.currentTarget.textContent=snd?'효과음 켜짐':'효과음 꺼짐';saveSet()});
+$('bBgm').addEventListener('click',e=>{bgm=!bgm;e.currentTarget.textContent=bgm?'음악 켜짐':'음악 꺼짐';if(musG)musG.gain.value=bgm?.55:0;mus.next=0;saveSet()});
 $('bFull').addEventListener('click',()=>{try{if(document.fullscreenElement)document.exitFullscreen();else{const p=$('stage').requestFullscreen();if(p&&p.catch)p.catch(()=>toast('이 화면에서는 전체 화면을 쓸 수 없습니다.'))}}catch(e){toast('이 화면에서는 전체 화면을 쓸 수 없습니다.')}});
 $('bNew').addEventListener('click',async()=>{if(busy||mode!=='map')return;busy=true;
   const c=await listBox('새 게임',[{label:'새 은하에서 다시 시작한다',sub:'행성 배치가 새로 만들어집니다'}],'','지금까지의 진행 상황이 지워집니다.');
-  if(c===0){setState(newState());save()}busy=false;ui()});
+  if(c===0){setState(newState());save();await cine(opening())}busy=false;ui()});
 
 /* ---------- save files ---------- */
 function sanitize(o){
@@ -1102,9 +1236,10 @@ async function title(){
     `<div class="logo"><span>${['#5a78ff','#ee3333','#5fd0c0','#ff7ad0','#9be04a','#ffb040','#b9a8ff'].map(c=>`<i style="background:${c}"></i>`).join('')}</span><b>별빛 섬광</b></div>`+
     '지구 근처 우주에 낯선 인공 행성들이 나타났다. 실종된 동생과 둘째 형이 그 어딘가에 잡혀 있다는 소문이 돈다.\n지구 방위군은 이번에는 돕지 않는다. 큰형 한울만이 지구 근처의 전투를 돕기로 했다.','title');
   if(sv&&c===1){setState(newState());save()}
+  save();if(!sv||c===1)await cine(opening());
   busy=false;ui();
 }
-setState(newState());fit();$('bSpd').textContent='속도 ×'+spd;$('bSnd').textContent=snd?'소리 켜짐':'소리 꺼짐';
+setState(newState());fit();$('bSpd').textContent='속도 ×'+spd;$('bSnd').textContent=snd?'효과음 켜짐':'효과음 꺼짐';$('bBgm').textContent=bgm?'음악 켜짐':'음악 꺼짐';
 requestAnimationFrame(frame);title();
 if(document.fonts&&document.fonts.load)document.fonts.load('24px "Do Hyeon"').catch(()=>{});
 })();
