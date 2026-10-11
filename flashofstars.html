@@ -268,7 +268,7 @@ const SZ=['소형','중형','대형'],TAX=['낮음','보통','높음'];
 const SHOPN={fighter:'전투기',cruiser:'순양함',pirate:'해적선',cyl:'원통 전함',sphere:'구형 전함',green:'가시 전함',bird:'불새 전함',frost:'빙결 전함',steel:'강철 전함',titan:'거신 전함',
   scout:'정찰기',raider:'약탈함',tide:'해류 전함',mirage:'신기루 전함',boulder:'암석 전함',spore:'포자 전함',storm:'뇌운 전함',glacier:'빙산 전함',ember:'화산 전함',bastion:'요새 전함'};
 const FAC={
-  mine:{n:'광산',cost:300,d:'수입 +30/월'},
+  mine:{n:'광산',cost:300,d:'수입 +38/월'},
   trade:{n:'교역소',cost:350,d:'수입 +20/월 · 충성도 +1 · 중고 거래'},
   yard:{n:'조선소',cost:500,d:'수리와 전함 구입',uniq:1},
   arsenal:{n:'무기 공장',cost:500,d:'무기·보호막 구입',uniq:1},
@@ -306,6 +306,7 @@ const TECH=[];
    ['t0','조준 보정',300,20,'아군 명중률 +8%',0,7],['t1','집중 사격',500,45,'아군 공격이 10% 확률로 치명타(×1.5)',1,7,'t0'],['t2','방어 교범',700,70,'아군이 받는 피해 -10%',2,7,'t1'],
    ['t3','전자전',900,95,'적의 스킬 발동 확률 절반',3,7,'t2'],['t4','기습 전술',1100,120,'전투 시작 시 적 전체에 선제 포격 10',4,7,'t3']]
     .forEach(a=>TECH.push({id:a[0],n:a[1],x:a[5],y:a[6],req:a[7]?[a[7]]:[],cost:a[2],exp:a[3],d:a[4]}));})();
+TECH.forEach(t=>t.cost=Math.round(t.cost*2.25/10)*10);
 const TB=Object.fromEntries(TECH.map(t=>[t.id,t]));
 const COLS=17,ROWS=12,CELL=24,OX=6,OY=11;
 const cheb=(x,y,p)=>Math.max(Math.abs(x-p.x),Math.abs(y-p.y));
@@ -343,7 +344,7 @@ function genWorld(){
     return{pl,tiles,worm};
   }
 }
-function newState(){const w=genWorld();return{v:2,x:w.pl[0].x,y:w.pl[0].y,money:300,exp:0,loy:80,moves:0,month:1,
+function newState(){const w=genWorld();return{v:2,x:w.pl[0].x,y:w.pl[0].y,money:300,exp:0,loy:80,moves:0,month:1,fights:0,
   tech:{w0:true},prog:{},rsch:null,
   fleet:[ship('sung',-1,-1,1),ship('fighter',-1,-1,1),ship('fighter',-1,-1,1)],hangar:[],pl:w.pl,tiles:w.tiles,worm:w.worm,conq:{},info:{},guard:{},joined:{},lover:false}}
 function setState(st){S=st;PL=S.pl;for(const p of PL)p.c=PT[p.type].c[p.seed%PT[p.type].c.length];for(const k in pcache)delete pcache[k];V.x=S.x;V.y=S.y;trail=[];prev={}}
@@ -377,15 +378,15 @@ function zone(){const p=here();
 const cnt=(p,k)=>p.col.fac.filter(f=>f===k).length;
 const slots=p=>3+p.size+(S.tech.c3?1:0);
 function inc(p){const c=p.col,T=PT[p.type];if(c.rebel)return 0;
-  let v=(p.role==='earth'?30:15+8*p.size)+30*cnt(p,'mine')*(T.mine||1)*(S.tech.c0?1.25:1)+20*cnt(p,'trade')*(T.trade||1)*(S.tech.c1?1.25:1);
+  let v=(p.role==='earth'?30:15+8*p.size)+37.5*cnt(p,'mine')*(T.mine||1)*(S.tech.c0?1.25:1)+20*cnt(p,'trade')*(T.trade||1)*(S.tech.c1?1.25:1);
   v*=[.5,1,1.6][c.tax];if(c.fac.includes('bank'))v*=1.3;
   if(p.role!=='earth'){if(c.loy>=80)v*=1.2;else if(c.loy<50)v*=.7;if(c.martial)v*=.5}
   return Math.round(v)}
 const nCol=()=>PL.filter(p=>p.role!=='earth'&&owned(p)).length;
 function dl(p){if(p.role==='earth')return 0;const c=p.col;
-  return-(S.tech.c4?1:2)+[2,0,-5][c.tax]+cnt(p,'trade')+3*cnt(p,'admin')+cnt(p,'fort')+2*cnt(p,'theater')+(PT[p.type].loy||0)+(S.tech.c2?1:0)
+  return-(S.tech.c4?2:3)+[2,0,-5][c.tax]+cnt(p,'trade')+3*cnt(p,'admin')+cnt(p,'fort')+2*cnt(p,'theater')+(PT[p.type].loy||0)+(S.tech.c2?1:0)
     -Math.floor((nCol()-1)/3)+(S.x===p.x&&S.y===p.y?2:0)-(c.martial?1:0)}
-const bcost=(p,k)=>Math.round(FAC[k].cost*(PT[p.type].build||1)*(S.tech.c3?.8:1));
+const bcost=(p,k)=>Math.round(FAC[k].cost*1.25*(PT[p.type].build||1)*(S.tech.c3?.8:1));
 const totalInc=()=>PL.filter(owned).reduce((a,p)=>a+inc(p),0);
 const sign=v=>(v>=0?'+':'')+v;
 
@@ -649,7 +650,7 @@ function ui(){
     <div class="bar"><dt>${r?'연구 '+r.n:'연구 없음'}</dt><dd${ch('pr')}>${r?pr+'%':'-'}</dd><i style="--v:${pr}%"></i></div>
     <div class="bar${S.loy<60?' warn':''}"><dt>충성도</dt><dd${ch('loy')}>${S.loy}%</dd><i style="--v:${S.loy}%"></i></div></dl>
     <div class="hp" title="함대 내구도">${S.fleet.map(s=>`<span class="${BRO.includes(s.t)?'bro':''}" style="--v:${Math.round(s.hp/s.max*100)}%;--c:${hpCol(s.hp/s.max)}"></span>`).join('')}</div>
-    <p class="loc">${p?p.n:'우주 공간'}<small>${zone()}</small><small>${S.month}월 · 영토 ${PL.filter(owned).length} · 수입 +${totalInc()}/월</small></p>`;
+    <p class="loc">${p?p.n:'우주 공간'}<small>${zone()}</small><small>${S.month}월(전투 ${(S.fights||0)%4}/4) · 영토 ${PL.filter(owned).length} · 수입 +${totalInc()}</small></p>`;
   prev=vals;
   const c=cmds();let h='';
   for(let i=1;i<=10;i++){const o=c[i];
@@ -728,7 +729,7 @@ function techBox(){return new Promise(res=>{
 /* ---------- colony ---------- */
 async function colony(p){const c=p.col,T=PT[p.type],earth=p.role==='earth';
   for(;;){
-    const fest=100+50*p.size,removable=c.fac.filter((f,i)=>!(earth&&i<3)),hasT=c.fac.includes('trade'),full=c.fac.length>=slots(p);
+    const fest=300+150*p.size,festUsed=c.fest===S.month,removable=c.fac.filter((f,i)=>!(earth&&i<3)),hasT=c.fac.includes('trade'),full=c.fac.length>=slots(p);
     const head=`${T.n} ${SZ[p.size]} 행성`+(T.d?` · 특성: ${T.d}`:'')+'\n'+
       (earth?'본성 · 반란 없음':`충성도 ${c.loy}% (${sign(dl(p))}/월) · 세율 ${TAX[c.tax]}`+(c.martial?' · 계엄령':''))+` · 수입 +${inc(p)}만원/월\n`+
       `시설 ${c.fac.length}/${slots(p)}: ${c.fac.map(f=>FAC[f].n).join(', ')||'없음'}`;
@@ -736,7 +737,7 @@ async function colony(p){const c=p.col,T=PT[p.type],earth=p.role==='earth';
       {label:'시설 건설',sub:full?'빈 자리 없음':`빈 자리 ${slots(p)-c.fac.length}`,off:full},
       {label:'시설 철거',sub:'자리를 비웁니다',off:!removable.length},
       {label:'세율 조정',sub:earth?'본성은 고정':`${TAX[c.tax]} → ${TAX[(c.tax+1)%3]}`,off:earth},
-      {label:'축제 개최',sub:'충성도 +15',right:fest+'만원',off:earth||S.money<fest||c.loy>=100},
+      {label:'축제 개최',sub:festUsed?'이번 달에는 이미 열었습니다':'충성도 +15 · 한 달에 한 번',right:fest+'만원',off:earth||festUsed||S.money<fest||c.loy>=100},
       {label:'중고 무기 매각',sub:hasT?'장비를 반값에':'교역소 필요',off:!hasT},
       {label:'중고 전함 매각',sub:hasT?'전함을 반값에':'교역소 필요',off:!hasT},
       earth?{label:'격납고',sub:`보관 ${S.hangar.length}/8척 · 함선을 맡기거나 꺼냅니다`}:{label:c.martial?'계엄령 해제':'계엄령 선포',sub:c.martial?'수입이 원래대로 돌아옵니다':'반란을 막지만 수입 절반 · 충성도 -1/월'}],`자금 ${S.money}만원`,head);
@@ -750,7 +751,7 @@ async function colony(p){const c=p.col,T=PT[p.type],earth=p.role==='earth';
       const j=await listBox('시설 철거',idx.map(n=>({label:FAC[c.fac[n]].n,sub:FAC[c.fac[n]].d})),'철거한 시설의 비용은 돌려받지 못합니다.');
       if(j>=0){const k=c.fac.splice(idx[j],1)[0];toast(`${FAC[k].n} 철거`);ui()}}
     else if(i===2){c.tax=(c.tax+1)%3;toast(`세율 ${TAX[c.tax]} · 충성도 ${sign(dl(p))}/월 · 수입 +${inc(p)}/월`);ui()}
-    else if(i===3){S.money-=fest;c.loy=Math.min(100,c.loy+15);beep(880,.15);toast(`축제 · 충성도 ${c.loy}%`);ui()}
+    else if(i===3){S.money-=fest;c.fest=S.month;c.loy=Math.min(100,c.loy+15);beep(880,.15);toast(`축제 · 충성도 ${c.loy}%`);ui()}
     else if(i===4){for(;;){const k=await fleetBox('무기와 보호막을 반값에 넘길 전함을 고르세요',s=>s.w>=0||s.sh>=0);if(k<0)break;
       const s=S.fleet[k],v=Math.floor(((s.w>=0?WP[s.w]:0)+(s.sh>=0?SP[s.sh]:0))/2);s.w=-1;s.sh=-1;S.money+=v;ui();beep(520);toast(`+${v}만원`)}}
     else{for(;;){const k=await fleetBox('반값에 팔 전함을 고르세요 (형제의 전함은 팔 수 없습니다)',s=>!BRO.includes(s.t));if(k<0)break;
@@ -776,7 +777,7 @@ async function hangar(){
 async function empire(){for(;;){const cols=PL.filter(owned);
   const i=await listBox(`제국 현황 · ${S.month}월`,cols.map(p=>({label:p.n,
     sub:p.col.rebel?'반란 중 · 함대로 진압해야 합니다':p.role==='earth'?`본성 · 시설 ${p.col.fac.length}/${slots(p)}`:`${PT[p.type].n} · 충성도 ${p.col.loy}% (${sign(dl(p))}) · 시설 ${p.col.fac.length}/${slots(p)}`+(p.col.loy<30?' · 반란 위험':''),
-    right:`+${inc(p)}/월`})),`월 수입 +${totalInc()}만원 · 8칸 이동마다 한 달`);
+    right:`+${inc(p)}/월`})),`월 수입 +${totalInc()}만원 · 전투 4회마다 한 달`);
   if(i<0)return;const p=cols[i];
   await msgBox(p.n,`${PT[p.type].n} ${SZ[p.size]} 행성`+(PT[p.type].d?` · 특성: ${PT[p.type].d}`:'')+`\n시설: ${p.col.fac.map(f=>FAC[f].n).join(', ')||'없음'}\n`+
     (p.role==='earth'?'':`세율 ${TAX[p.col.tax]} · `)+`수입 +${inc(p)}만원/월\n\n내정은 그 행성에 함대가 머물 때 할 수 있습니다.`)}}
@@ -784,7 +785,7 @@ async function monthTick(){S.month++;let tot=0,labs=0,xp=0;const reb=[];
   for(const p of PL){if(!owned(p))continue;const c=p.col,T=PT[p.type];if(c.rebel)continue;
     tot+=inc(p);labs+=cnt(p,'lab')*(T.lab||1);xp+=3*cnt(p,'academy');
     if(p.role!=='earth'){c.loy=clamp(c.loy+dl(p),0,100);
-      if(!c.martial&&c.loy<35&&Math.random()<(35-c.loy)*.03*(c.fac.includes('fort')?.5:1)*(T.calm||1)*(S.tech.c4?.7:1)){c.rebel=true;
+      if(!c.martial&&c.loy<35&&Math.random()<(35-c.loy)*.045*(c.fac.includes('fort')?.5:1)*(T.calm||1)*(S.tech.c4?.7:1)){c.rebel=true;
         const lostF=c.fac.length?FAC[c.fac.splice(ri(0,c.fac.length-1),1)[0]].n:null;reb.push([p,lostF])}}}
   S.money+=tot;S.exp+=xp;let note='';if(tot>0)sfx.coin();
   const calm=PL.filter(p=>p.role!=='earth'&&owned(p)&&!p.col.rebel);
@@ -851,7 +852,7 @@ async function gear(title,names,prices,key,desc){const tk=key==='w'?'w':'s';
 }
 async function run(n){if(busy||mode!=='map'||!cmds()[n])return;busy=true;try{await CMD[n]()}finally{busy=false;save();ui()}}
 async function help(){if(busy||mode!=='map')return;busy=true;
-  await msgBox('도움말','방향키/WASD: 이동 · 숫자키: 명령 · 0/Esc: 나가기\n\n행성 배치와 종류, 지키는 세력은 게임마다 달라집니다. 해적을 잡아 자금과 경험을 모으고, 연구소가 있는 행성에서 기술을 개발해 무기와 보호막을 여십시오.\n점령한 행성은 식민지가 됩니다. 내정에서 시설을 짓고 세율을 정하면 8칸 이동마다 한 번씩 수입이 들어옵니다. 충성도는 가만두면 떨어지고, 영토가 넓을수록 더 빨리 식습니다. 35% 아래면 반란이 일어날 수 있고 50% 아래면 수입이 줄어듭니다. 함대가 머무는 행성은 충성도가 오릅니다.\n우리 함대의 장비가 좋아질수록 마주치는 적도 강해집니다. 무기와 보호막은 종류마다 고유한 효과가 있습니다.\n지도: 노란 느낌표는 새 정보, 붉은 ✕는 호위 함대, 돌무더기는 해적이 많은 소행성대, 보랏빛 칸은 적을 만나지 않는 성운, 빛나는 고리는 웜홀입니다.\n내구도 10 이하인 전함은 자폭 돌격을 합니다.');
+  await msgBox('도움말','방향키/WASD: 이동 · 숫자키: 명령 · 0/Esc: 나가기\n\n행성 배치와 종류, 지키는 세력은 게임마다 달라집니다. 해적을 잡아 자금과 경험을 모으고, 연구소가 있는 행성에서 기술을 개발해 무기와 보호막을 여십시오.\n점령한 행성은 식민지가 됩니다. 내정에서 시설을 짓고 세율을 정하면 전투를 4번 치를 때마다 한 달이 지나 수입이 들어옵니다. 충성도는 가만두면 떨어지고, 영토가 넓을수록 더 빨리 식습니다. 35% 아래면 반란이 일어날 수 있고 50% 아래면 수입이 줄어듭니다. 함대가 머무는 행성은 충성도가 오릅니다.\n우리 함대의 장비가 좋아질수록 마주치는 적도 강해집니다. 무기와 보호막은 종류마다 고유한 효과가 있습니다.\n지도: 노란 느낌표는 새 정보, 붉은 ✕는 호위 함대, 돌무더기는 해적이 많은 소행성대, 보랏빛 칸은 적을 만나지 않는 성운, 빛나는 고리는 웜홀입니다.\n내구도 10 이하인 전함은 자폭 돌격을 합니다.');
   busy=false}
 
 /* ---------- enemies ---------- */
@@ -917,7 +918,6 @@ async function step(nx,ny){
   }
   S.x=nx;S.y=ny;S.moves++;sfx.move();
   if(S.moves%10===0)S.loy=Math.max(0,S.loy-1);
-  if(S.moves%8===0)await monthTick();
   if(p)return;
   ui();
   if(S.worm){const i=S.worm.findIndex(q=>q[0]===nx&&q[1]===ny);
@@ -1093,7 +1093,7 @@ async function battle(E,o){
     setState(newState());save();await cine(opening());return'over'}
   if(res==='win'){
     let m=0;for(const e of E)m+=40+Math.round((e.base||e.max)/2)+(e.w+1)*25;
-    if(E[0].lone)m+=ri(800,1000);if(o.boss)m+=o.boss.tier*500;m=Math.round(m/2);
+    if(E[0].lone)m+=ri(800,1000);if(o.boss)m+=o.boss.tier*500;m=Math.round(m*.45*1.3);
     const x=E.length+(o.boss?15:0);S.money+=m;S.exp+=x;S.loy=Math.max(0,S.loy-2);
     let txt=`자금 +${m}만원\n경험 +${x}`;if(lost)txt+=`\n아군 ${lost}척 격침`;
     if(S.tech.e1){for(const s of S.fleet)s.hp=Math.min(s.max,s.hp+Math.round(s.max*.1));txt+='\n응급 수리 기술이 내구도를 10% 되살렸습니다.'}
@@ -1102,6 +1102,7 @@ async function battle(E,o){
       const gone=before-S.fleet.length;if(gone)txt+=`\n충성도가 낮아 ${gone}척이 함대를 떠났습니다. 월급을 지급하십시오.`}
     ui();await msgBox('승리',txt);
   }else if(res==='flee'){S.loy=Math.max(0,S.loy-5);ui();await msgBox('퇴각','전투에서 물러났습니다. 충성도가 5% 떨어졌습니다.'+(lost?`\n아군 ${lost}척이 격침되었습니다.`:''))}
+  S.fights=(S.fights||0)+1;if(S.fights%4===0)await monthTick();
   return res;
 }
 function drawShip(s,i,flip,t){const p=B.pos.get(s);if(!p)return;
@@ -1278,7 +1279,7 @@ function sanitize(o){
     const type=PT[p.type]?p.type:'rock',size=num(p.size,0,2,1);
     const q={id:'p'+i,n:name(p.n,'이름 없는 별 '+i),x:num(p.x,0,COLS-1,0),y:num(p.y,0,ROWS-1,0),type,size,role:roles.includes(p.role)?p.role:'bonus',
       tier:num(p.tier,0,6,1),fac:FA[p.fac]?p.fac:'legion',seed:num(p.seed,0,9999,0),ring:!!p.ring,pre:FAC[p.pre]?p.pre:null};
-    if(p.col&&typeof p.col==='object')q.col={loy:num(p.col.loy,0,100,50),tax:num(p.col.tax,0,2,1),fac:(Array.isArray(p.col.fac)?p.col.fac:[]).filter(f=>FAC[f]).slice(0,7),rebel:!!p.col.rebel,martial:!!p.col.martial};
+    if(p.col&&typeof p.col==='object')q.col={loy:num(p.col.loy,0,100,50),tax:num(p.col.tax,0,2,1),fac:(Array.isArray(p.col.fac)?p.col.fac:[]).filter(f=>FAC[f]).slice(0,7),rebel:!!p.col.rebel,martial:!!p.col.martial,fest:num(p.col.fest,0,99999,0)};
     return q});
   if(pl.includes(null)||pl.length<3||pl[0].role!=='earth'||pl.filter(p=>p.role==='hq').length!==1||pl.filter(p=>p.role==='earth').length!==1)return null;
   if(!pl[0].col)pl[0].col={loy:100,tax:1,fac:['yard','arsenal','lab'],rebel:false};pl[0].col.rebel=false;
@@ -1295,7 +1296,7 @@ function sanitize(o){
   const tech=flags(o.tech,k=>!!TB[k]);tech.w0=true;const prog={};
   if(o.prog&&typeof o.prog==='object')for(const k of Object.keys(o.prog))if(TB[k]&&!tech[k])prog[k]=num(o.prog[k],0,100,0);
   return{v:2,x:num(o.x,0,COLS-1,pl[0].x),y:num(o.y,0,ROWS-1,pl[0].y),money:num(o.money,0,9999999,0),exp:num(o.exp,0,99999,0),
-    loy:num(o.loy,0,100,80),moves:num(o.moves,0,1e9,0),month:num(o.month,1,99999,1),tech,prog,rsch:TB[o.rsch]&&!tech[o.rsch]?o.rsch:null,fleet,hangar,pl,tiles,worm,
+    loy:num(o.loy,0,100,80),moves:num(o.moves,0,1e9,0),month:num(o.month,1,99999,1),fights:num(o.fights,0,1e9,0),tech,prog,rsch:TB[o.rsch]&&!tech[o.rsch]?o.rsch:null,fleet,hangar,pl,tiles,worm,
     conq,info:flags(o.info,k=>ids.includes(k)),guard:flags(o.guard,cell),joined:flags(o.joined,k=>['gu','ok','heon'].includes(k)),lover:!!o.lover}}
 function textBox(title,text,value){return new Promise(res=>{
   openDlg(`<div class="win"><h2>${title}</h2><div class="body"><div class="txt">${text}</div><textarea id="saveText" readonly></textarea></div><div class="foot"><button data-i="1">복사</button><button data-i="0"><kbd>↵</kbd>닫기</button></div></div>`);
