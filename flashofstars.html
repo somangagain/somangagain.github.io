@@ -98,8 +98,8 @@ kbd{font:inherit;color:var(--yellow);border:1px solid currentColor;padding:0 .28
 .win .foot button{white-space:nowrap;color:var(--yellow);display:flex;gap:.4em;align-items:center}
 .tree{position:relative;flex:1;min-height:0;margin:calc(4*var(--u)) calc(6*var(--u))}
 .tree svg{position:absolute;inset:0;width:100%;height:100%}
-.tn{position:absolute;width:18.8%;height:12.6%;box-sizing:border-box;background:var(--olive-lo);border:1px solid var(--olive-hi);
-  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:0;padding:0 .3em;text-align:left;line-height:1.15;overflow:hidden;font-size:.82em}
+.tn{position:absolute;width:18.8%;height:11.2%;box-sizing:border-box;background:var(--olive-lo);border:1px solid var(--olive-hi);
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:0;padding:0 .3em;text-align:left;line-height:1.08;overflow:hidden;font-size:.76em}
 .tn b{font-weight:400;white-space:nowrap;display:flex;align-items:center;gap:.25em;color:var(--cream)}
 .tn b kbd{font-size:.8em}
 .tn small{font-size:.74em;color:var(--olive-ink)}
@@ -176,7 +176,7 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
       <nav class="cmd" id="cmd"></nav>
       <div class="bbar" id="bbar" hidden>
         <div class="blog"><span id="bprev"></span><span id="bmsg"></span></div>
-        <div class="brow"><div id="bbtns"></div><button id="bSpd">속도 ×1</button></div>
+        <div class="brow"><div id="bbtns"></div><button id="bSpd">1배속</button></div>
       </div>
       <div id="toast" role="status"></div>
       <section class="dlg" id="dlg" hidden></section>
@@ -190,7 +190,7 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
       <span></span><button id="pD" aria-label="아래">▼</button><span></span>
     </div>
     <div class="side">
-      <p>방향키나 WASD로 함대를 움직이고 숫자키로 명령을 내립니다. 지도를 눌러도 한 칸씩 이동합니다. 전투 중 스페이스로 속도를 바꿉니다. 진행 상황은 이 브라우저에 자동 저장되고, 파일로 내보내 다른 기기에서 불러올 수도 있습니다.</p>
+      <p>방향키나 WASD로 함대를 움직이고 숫자키로 명령을 내립니다. 지도를 눌러도 한 칸씩 이동합니다. 진행 상황은 이 브라우저에 자동 저장되고, 파일로 내보내 다른 기기에서 불러올 수도 있습니다.</p>
       <div class="row">
         <button id="bHelp">도움말</button>
         <button id="bSnd">효과음 켜짐</button>
@@ -238,13 +238,19 @@ const TY={
   efighter:{n:'투항기',hp:65,price:150}
 };
 const SK={sung:'집중 포격',gu:'전탄 발사',ok:'긴급 수리',heon:'보호막 전개',cruiser:'푸른 벼락',cyl:'생명의 빛',sphere:'보호의 벽',bird:'폭발의 검',green:'백도의 지배자',frost:'실명의 장막',steel:'예리한 검격',titan:'파괴자의 검',
-  raider:'기습 약탈',tide:'생명의 회귀',storm:'천둥의 창',glacier:'신성한 방패',ember:'금빛 검풍',bastion:'철벽 방진'};
-const TRD={scout:'회피 기동',mirage:'회피 기동',spore:'매 턴 재생',boulder:'두꺼운 장갑'};
+  raider:'기습 약탈',tide:'생명의 회귀',storm:'천둥의 창',glacier:'신성한 방패',ember:'금빛 검풍',bastion:'철벽 방진',scout:'표적 지정',mirage:'망령 급습',boulder:'도발',spore:'포자 구름'};
+const TRD={scout:'회피',mirage:'회피',spore:'매 턴 재생'};
 const tr=(s,k)=>s[k]||(TY[s.t]&&TY[s.t][k])||0;
 const SHIPTECH={cruiser:'h0',sphere:'h0',tide:'h0',cyl:'h1',frost:'h1',bird:'h1',mirage:'h1',boulder:'h1',spore:'h1',storm:'h1',green:'h2',steel:'h2',glacier:'h2',ember:'h2',bastion:'h2',titan:'h3'};
-const SKD={cruiser:'적 전체 피해',cyl:'아군 전체 회복',sphere:'아군 전체 흡수막',bird:'적 전체 관통 피해 ×2',green:'강한 적 2기 내구도 절반',frost:'적 전체 명중률 저하',steel:'적 전체 피해 ×2',titan:'적 전체 큰 피해',raider:'적 1기 큰 피해',tide:'가장 약한 아군 회복',storm:'적 전체 관통 피해·실명',glacier:'아군 전체 1회 방어',ember:'적 전체 피해',bastion:'아군 전체 큰 흡수막',
-  scout:'적의 공격을 잘 피한다',mirage:'적의 공격을 잘 피한다',spore:'매 턴 내구도 8 회복',boulder:'내구도가 높다'};
-const ESK={volley:'붉은 검풍',repair:'긴급 정비',barrier:'결정 장막',snipe:'주포 저격'};
+const SKD={sung:'강한 적 1기 큰 피해·기절',gu:'적 전체 큰 피해',ok:'아군 전체 회복·상태 해제',heon:'아군 전체 1회 방어',
+  cruiser:'적 전체 피해·20% 기절',cyl:'아군 전체 회복',sphere:'아군 전체 흡수막',bird:'적 전체 관통 피해 ×2·화상',green:'강한 적 2기 내구도 절반',frost:'적 전체 실명',
+  steel:'적 전체 피해 ×2',titan:'적 전체 큰 피해',raider:'적 1기 큰 피해·자금 약탈',tide:'가장 약한 아군 크게 회복',storm:'적 전체 관통 피해·30% 기절',
+  glacier:'아군 전체 1회 방어·상태 해제',ember:'적 전체 피해·화상',bastion:'아군 전체 큰 흡수막',scout:'강한 적에게 표적(받는 피해 +50%)',
+  mirage:'적 전체 보호 효과 제거·피해',boulder:'적의 공격을 자신에게 끌어들임',spore:'적 전체 화상'};
+const WX=['빗나가지 않음','','35% 확률로 보호막 무시','2연사','20% 확률 치명타','3연사','35% 확률 화상','다른 적 1기에 여파 · 25% 보호막 무시'];
+const FIRE=[0,3,4,6],MAG=[1,3,5,7],ELEC=[2,4,5,6,7];
+const SX=i=>[FIRE.includes(i)?'막으면 반사 피해':'',MAG.includes(i)?'회피 +8%':'',ELEC.includes(i)?'상태이상 면역':''].filter(Boolean).join(' · ');
+const ESK={volley:'붉은 검풍',repair:'긴급 정비',barrier:'결정 장막',snipe:'주포 저격',burnall:'산성 분출'};
 /* planet types: colours, colony trait, and the ship model its yard builds */
 const PT={
   ocean:{n:'해양형',c:['#3f78ff','#2f9be0'],d:'충성도 +1/월 · 교역 +50%',loy:1,trade:1.5,ship:['cruiser','tide'],names:['물빛 요람','파랑새','깊은 푸름','조개별']},
@@ -262,13 +268,16 @@ const SZ=['소형','중형','대형'],TAX=['낮음','보통','높음'];
 const SHOPN={fighter:'전투기',cruiser:'순양함',pirate:'해적선',cyl:'원통 전함',sphere:'구형 전함',green:'가시 전함',bird:'불새 전함',frost:'빙결 전함',steel:'강철 전함',titan:'거신 전함',
   scout:'정찰기',raider:'약탈함',tide:'해류 전함',mirage:'신기루 전함',boulder:'암석 전함',spore:'포자 전함',storm:'뇌운 전함',glacier:'빙산 전함',ember:'화산 전함',bastion:'요새 전함'};
 const FAC={
-  mine:{n:'광산',cost:300,d:'수입 +60/월'},
-  trade:{n:'교역소',cost:350,d:'수입 +40/월 · 충성도 +1 · 중고 거래'},
+  mine:{n:'광산',cost:300,d:'수입 +30/월'},
+  trade:{n:'교역소',cost:350,d:'수입 +20/월 · 충성도 +1 · 중고 거래'},
   yard:{n:'조선소',cost:500,d:'수리와 전함 구입',uniq:1},
   arsenal:{n:'무기 공장',cost:500,d:'무기·보호막 구입',uniq:1},
   lab:{n:'연구소',cost:600,d:'연구 진행 +4%/월 · 기술 개발 가능'},
   admin:{n:'행정청',cost:250,d:'충성도 +3/월',uniq:1},
-  fort:{n:'방어 기지',cost:400,d:'반란 확률 절반 · 충성도 +1/월',uniq:1}
+  fort:{n:'방어 기지',cost:400,d:'반란 확률 절반 · 충성도 +1/월',uniq:1},
+  theater:{n:'문화관',cost:300,d:'충성도 +2/월'},
+  bank:{n:'은행',cost:700,d:'이 행성 수입 +30%',uniq:1},
+  academy:{n:'사관학교',cost:600,d:'경험 +3/월',uniq:1}
 };
 /* enemy factions */
 const FA={
@@ -283,16 +292,20 @@ const FA={
 const TECH=[];
 (()=>{const wp=[[0,.5],[1,.5],[2,0],[2,1],[3,0],[3,1],[4,0],[4,1]],wr=[[],['w0'],['w1'],['w1'],['w2'],['w3'],['w4'],['w4','w5']];
   const wc=[0,150,300,500,800,1100,1500,2000],we=[0,10,25,40,60,80,105,130];
-  W.forEach((n,i)=>TECH.push({id:'w'+i,n,x:wp[i][0],y:wp[i][1],req:wr[i],cost:wc[i],exp:we[i],ic:['w',i],d:`무기 구입 가능 · 공격력 ${WD[i]}`}));
+  W.forEach((n,i)=>TECH.push({id:'w'+i,n,x:wp[i][0],y:wp[i][1],req:wr[i],cost:wc[i],exp:we[i],ic:['w',i],d:`무기 구입 가능 · 공격력 ${WD[i]}`+(WX[i]?' · '+WX[i]:'')}));
   const sp=[[0,2.5],[1,2.5],[2,3],[2,2],[3,2],[3,3],[4,2],[4,3]],sr=[[],['s0'],['s1'],['s1'],['s3','s2'],['s2'],['s4'],['s5']];
   const sc=[150,250,400,600,800,1000,1300,1600],se=[5,15,30,45,65,85,110,135];
-  SH.forEach((n,i)=>TECH.push({id:'s'+i,n,x:sp[i][0],y:sp[i][1],req:sr[i],cost:sc[i],exp:se[i],ic:['s',i],d:`보호막 구입 가능 · 피해 ${Math.round((.2+.07*i)*100)}% 흡수`}));
+  SH.forEach((n,i)=>TECH.push({id:'s'+i,n,x:sp[i][0],y:sp[i][1],req:sr[i],cost:sc[i],exp:se[i],ic:['s',i],d:`보호막 구입 가능 · 피해 ${Math.round((.2+.07*i)*100)}% 흡수 · ${SX(i)}`}));
   [['e0','선체 강화',400,20,'모든 전함 최대 내구도 +10%'],['e1','응급 수리',600,50,'전투에서 이기면 내구도 10% 회복'],['e2','복합 장갑',900,90,'모든 전함 최대 내구도 +10% 추가'],['e3','추진기 개량',700,60,'퇴각 성공률 +20% · 조우 확률 감소']]
     .forEach((a,i)=>TECH.push({id:a[0],n:a[1],x:i,y:4,req:i?['e'+(i-1)]:[],cost:a[2],exp:a[3],d:a[4]}));
   [['c0','채굴 공학',300,15,'모든 광산 수입 +25%'],['c1','교역망',400,30,'모든 교역소 수입 +25%'],['c2','식민 행정학',500,50,'모든 식민지 충성도 +1/월'],['c3','건축 공학',700,75,'건설비 -20% · 시설 자리 +1']]
     .forEach((a,i)=>TECH.push({id:a[0],n:a[1],x:i,y:5,req:i?['c'+(i-1)]:[],cost:a[2],exp:a[3],d:a[4]}));
   [['h0','중형 선체',250,10,'중형 전함 구입 가능 (순양함·구형·해류)'],['h1','대형 선체',600,40,'대형 전함 7종 구입 가능'],['h2','거함 설계',1000,80,'거함 5종 구입 가능'],['h3','기함 건조',1500,120,'모든 조선소에서 거신 전함 구입 가능']]
-    .forEach((a,i)=>TECH.push({id:a[0],n:a[1],x:i,y:6,req:i?['h'+(i-1)]:[],cost:a[2],exp:a[3],d:a[4]}));})();
+    .forEach((a,i)=>TECH.push({id:a[0],n:a[1],x:i,y:6,req:i?['h'+(i-1)]:[],cost:a[2],exp:a[3],d:a[4]}));
+  [['e4','자가 수복',1200,110,'전투 중 모든 아군이 매 턴 내구도 3 회복',4,4,'e3'],['c4','자치 헌장',900,100,'충성도 기본 하락 완화 · 반란 확률 -30%',4,5,'c3'],['h4','지휘 체계',1400,130,'아군 스킬 발동 확률 20% → 30%',4,6,'h3'],
+   ['t0','조준 보정',300,20,'아군 명중률 +8%',0,7],['t1','집중 사격',500,45,'아군 공격이 10% 확률로 치명타(×1.5)',1,7,'t0'],['t2','방어 교범',700,70,'아군이 받는 피해 -10%',2,7,'t1'],
+   ['t3','전자전',900,95,'적의 스킬 발동 확률 절반',3,7,'t2'],['t4','기습 전술',1100,120,'전투 시작 시 적 전체에 선제 포격 10',4,7,'t3']]
+    .forEach(a=>TECH.push({id:a[0],n:a[1],x:a[5],y:a[6],req:a[7]?[a[7]]:[],cost:a[2],exp:a[3],d:a[4]}));})();
 const TB=Object.fromEntries(TECH.map(t=>[t.id,t]));
 const COLS=17,ROWS=12,CELL=24,OX=6,OY=11;
 const cheb=(x,y,p)=>Math.max(Math.abs(x-p.x),Math.abs(y-p.y));
@@ -338,7 +351,7 @@ const KEY='sevenstars-v2',SETKEY='sevenstars-set';
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{return sanitize(JSON.parse(localStorage.getItem(KEY)))}catch(e){}return null}
 let snd=true,bgm=true,spd=1;
-try{const o=JSON.parse(localStorage.getItem(SETKEY));if(o){snd=o.snd!==false;bgm=o.bgm!==false;spd=[1,2,4,8].includes(o.spd)?o.spd:1}}catch(e){}
+try{const o=JSON.parse(localStorage.getItem(SETKEY));if(o){snd=o.snd!==false;bgm=o.bgm!==false;spd=o.spd===2?2:1}}catch(e){}
 function saveSet(){try{localStorage.setItem(SETKEY,JSON.stringify({snd,bgm,spd}))}catch(e){}}
 const wn=s=>s.w>=0?W[s.w]:'기본포', sn=s=>s.sh>=0?SH[s.sh]:'보호막 없음', wd=s=>s.w>=0?WD[s.w]:10;
 const canAdd=()=>S.fleet.length<8;
@@ -364,9 +377,14 @@ function zone(){const p=here();
 const cnt=(p,k)=>p.col.fac.filter(f=>f===k).length;
 const slots=p=>3+p.size+(S.tech.c3?1:0);
 function inc(p){const c=p.col,T=PT[p.type];if(c.rebel)return 0;
-  let v=(p.role==='earth'?60:30+15*p.size)+60*cnt(p,'mine')*(T.mine||1)*(S.tech.c0?1.25:1)+40*cnt(p,'trade')*(T.trade||1)*(S.tech.c1?1.25:1);
-  v*=[.5,1,1.6][c.tax];if(p.role!=='earth'&&c.loy>=80)v*=1.2;return Math.round(v)}
-function dl(p){if(p.role==='earth')return 0;const c=p.col;return-1+[2,0,-4][c.tax]+cnt(p,'trade')+3*cnt(p,'admin')+cnt(p,'fort')+(PT[p.type].loy||0)+(S.tech.c2?1:0)}
+  let v=(p.role==='earth'?30:15+8*p.size)+30*cnt(p,'mine')*(T.mine||1)*(S.tech.c0?1.25:1)+20*cnt(p,'trade')*(T.trade||1)*(S.tech.c1?1.25:1);
+  v*=[.5,1,1.6][c.tax];if(c.fac.includes('bank'))v*=1.3;
+  if(p.role!=='earth'){if(c.loy>=80)v*=1.2;else if(c.loy<50)v*=.7;if(c.martial)v*=.5}
+  return Math.round(v)}
+const nCol=()=>PL.filter(p=>p.role!=='earth'&&owned(p)).length;
+function dl(p){if(p.role==='earth')return 0;const c=p.col;
+  return-(S.tech.c4?1:2)+[2,0,-5][c.tax]+cnt(p,'trade')+3*cnt(p,'admin')+cnt(p,'fort')+2*cnt(p,'theater')+(PT[p.type].loy||0)+(S.tech.c2?1:0)
+    -Math.floor((nCol()-1)/3)+(S.x===p.x&&S.y===p.y?2:0)-(c.martial?1:0)}
 const bcost=(p,k)=>Math.round(FAC[k].cost*(PT[p.type].build||1)*(S.tech.c3?.8:1));
 const totalInc=()=>PL.filter(owned).reduce((a,p)=>a+inc(p),0);
 const sign=v=>(v>=0?'+':'')+v;
@@ -691,9 +709,9 @@ function techBox(){return new Promise(res=>{
     let lines='';for(const t of TECH)for(const r of t.req){const a=TB[r],on=S.tech[r];
       lines+=`<line x1="${a.x*100+96}" y1="${a.y*100+50}" x2="${t.x*100+4}" y2="${t.y*100+50}" stroke="${on?'#ffc857':'#15100c'}" stroke-width="2" vector-effect="non-scaling-stroke"/>`}
     const nodes=TECH.map((t,i)=>{const st=tstate(t),pr=S.prog[t.id]||0;
-      return`<button class="tn ${st}${t.id===sel?' sel':''}" data-t="${t.id}" style="left:${t.x*20+.6}%;top:${t.y/7*100+.8}%"><b><kbd>${i<26?String.fromCharCode(65+i):i-25}</kbd>${t.ic?icon(t.ic[0],t.ic[1]):''}${t.n}</b>`+
+      return`<button class="tn ${st}${t.id===sel?' sel':''}" data-t="${t.id}" style="left:${t.x*20+.6}%;top:${t.y/8*100+.6}%"><b><kbd>${i<26?String.fromCharCode(65+i):i<35?i-25:'·'}</kbd>${t.ic?icon(t.ic[0],t.ic[1]):''}${t.n}</b>`+
         `<small>${st==='done'?'개발 완료':pr?`연구 ${pr}%`:`${t.cost}만 · 경험 ${t.exp}`}</small>${st!=='done'&&pr?`<i style="--v:${pr}%"></i>`:''}</button>`}).join('');
-    openDlg(`<div class="win full"><h2>과학 기술</h2><div class="tree"><svg viewBox="0 0 500 700" preserveAspectRatio="none">${lines}</svg>${nodes}</div>`+
+    openDlg(`<div class="win full"><h2>과학 기술</h2><div class="tree"><svg viewBox="0 0 500 800" preserveAspectRatio="none">${lines}</svg>${nodes}</div>`+
       `<div class="foot"><span class="note">${t0.n} · ${t0.d}${st0==='lock'?' · 선행 기술 필요':''}<br>자금 ${S.money}만원 · 경험 ${S.exp}</span>`+
       `<span class="fb">${st0==='open'?`<button data-act="go"><kbd>↵</kbd>${pr0>=100?'완성':'투자 +20% ('+step+'만)'}</button>`:''}<button data-act="x"><kbd>0</kbd>나가기</button></span></div></div>`);
     dlg.onclick=e=>{const b=e.target.closest('button');if(!b)return;
@@ -712,7 +730,7 @@ async function colony(p){const c=p.col,T=PT[p.type],earth=p.role==='earth';
   for(;;){
     const fest=100+50*p.size,removable=c.fac.filter((f,i)=>!(earth&&i<3)),hasT=c.fac.includes('trade'),full=c.fac.length>=slots(p);
     const head=`${T.n} ${SZ[p.size]} 행성`+(T.d?` · 특성: ${T.d}`:'')+'\n'+
-      (earth?'본성 · 반란 없음':`충성도 ${c.loy}% (${sign(dl(p))}/월) · 세율 ${TAX[c.tax]}`)+` · 수입 +${inc(p)}만원/월\n`+
+      (earth?'본성 · 반란 없음':`충성도 ${c.loy}% (${sign(dl(p))}/월) · 세율 ${TAX[c.tax]}`+(c.martial?' · 계엄령':''))+` · 수입 +${inc(p)}만원/월\n`+
       `시설 ${c.fac.length}/${slots(p)}: ${c.fac.map(f=>FAC[f].n).join(', ')||'없음'}`;
     const i=await listBox(`${p.n} 내정`,[
       {label:'시설 건설',sub:full?'빈 자리 없음':`빈 자리 ${slots(p)-c.fac.length}`,off:full},
@@ -721,9 +739,9 @@ async function colony(p){const c=p.col,T=PT[p.type],earth=p.role==='earth';
       {label:'축제 개최',sub:'충성도 +15',right:fest+'만원',off:earth||S.money<fest||c.loy>=100},
       {label:'중고 무기 매각',sub:hasT?'장비를 반값에':'교역소 필요',off:!hasT},
       {label:'중고 전함 매각',sub:hasT?'전함을 반값에':'교역소 필요',off:!hasT},
-      ...(earth?[{label:'격납고',sub:`보관 ${S.hangar.length}/8척 · 함선을 맡기거나 꺼냅니다`}]:[])],`자금 ${S.money}만원`,head);
+      earth?{label:'격납고',sub:`보관 ${S.hangar.length}/8척 · 함선을 맡기거나 꺼냅니다`}:{label:c.martial?'계엄령 해제':'계엄령 선포',sub:c.martial?'수입이 원래대로 돌아옵니다':'반란을 막지만 수입 절반 · 충성도 -1/월'}],`자금 ${S.money}만원`,head);
     if(i<0)return;
-    if(i===6){await hangar();continue}
+    if(i===6){if(earth)await hangar();else{c.martial=!c.martial;toast(c.martial?'계엄령 선포 · 반란은 막지만 민심이 식습니다':'계엄령 해제');ui()}continue}
     if(i===0){const keys=Object.keys(FAC);
       const j=await listBox('시설 건설',keys.map(k=>{const n=cnt(p,k),co=bcost(p,k);
         return{label:FAC[k].n,sub:FAC[k].d+(n?` · 보유 ${n}`:''),right:co+'만원',off:S.money<co||(FAC[k].uniq&&n>0)}}),`자금 ${S.money}만원 · 빈 자리 ${slots(p)-c.fac.length}`);
@@ -762,16 +780,18 @@ async function empire(){for(;;){const cols=PL.filter(owned);
   if(i<0)return;const p=cols[i];
   await msgBox(p.n,`${PT[p.type].n} ${SZ[p.size]} 행성`+(PT[p.type].d?` · 특성: ${PT[p.type].d}`:'')+`\n시설: ${p.col.fac.map(f=>FAC[f].n).join(', ')||'없음'}\n`+
     (p.role==='earth'?'':`세율 ${TAX[p.col.tax]} · `)+`수입 +${inc(p)}만원/월\n\n내정은 그 행성에 함대가 머물 때 할 수 있습니다.`)}}
-async function monthTick(){S.month++;let tot=0,labs=0;const reb=[];
+async function monthTick(){S.month++;let tot=0,labs=0,xp=0;const reb=[];
   for(const p of PL){if(!owned(p))continue;const c=p.col,T=PT[p.type];if(c.rebel)continue;
-    tot+=inc(p);labs+=cnt(p,'lab')*(T.lab||1);
+    tot+=inc(p);labs+=cnt(p,'lab')*(T.lab||1);xp+=3*cnt(p,'academy');
     if(p.role!=='earth'){c.loy=clamp(c.loy+dl(p),0,100);
-      if(c.loy<30&&Math.random()<(30-c.loy)*.03*(c.fac.includes('fort')?.5:1)*(T.calm||1)){c.rebel=true;
+      if(!c.martial&&c.loy<35&&Math.random()<(35-c.loy)*.03*(c.fac.includes('fort')?.5:1)*(T.calm||1)*(S.tech.c4?.7:1)){c.rebel=true;
         const lostF=c.fac.length?FAC[c.fac.splice(ri(0,c.fac.length-1),1)[0]].n:null;reb.push([p,lostF])}}}
-  S.money+=tot;let note='';if(tot>0)sfx.coin();
+  S.money+=tot;S.exp+=xp;let note='';if(tot>0)sfx.coin();
+  const calm=PL.filter(p=>p.role!=='earth'&&owned(p)&&!p.col.rebel);
+  if(calm.length&&Math.random()<.14){const p=pick(calm),ev=pick(['소요 사태','물자 부족','전염병','해적 습격 소문']);p.col.loy=Math.max(0,p.col.loy-8);note=` · ${p.n}에 ${ev}(충성도 -8)`}
   const r=S.rsch&&!S.tech[S.rsch]?TB[S.rsch]:null;
-  if(r&&labs){S.prog[r.id]=Math.min(100,(S.prog[r.id]||0)+4*labs);if(S.prog[r.id]>=100&&S.exp>=r.exp){learn(r);note=' · '+r.n+' 완성'}}
-  if(!note)toast(`${S.month}월 · 수입 +${tot}만원`);
+  if(r&&labs){S.prog[r.id]=Math.min(100,(S.prog[r.id]||0)+4*labs);if(S.prog[r.id]>=100&&S.exp>=r.exp){learn(r);note=''}}
+  if(!(r&&S.tech[r.id]))toast(`${S.month}월 · 수입 +${tot}만원`+note);
   ui();
   for(const[p,lostF]of reb){beep(140,.4,'sawtooth',.06);await msgBox('반란',`${p.n}에서 반란이 일어났습니다!\n`+(lostF?`폭동으로 ${lostF}이(가) 파괴되었습니다.\n`:'')+'함대를 보내 진압할 때까지 수입이 끊기고 시설을 쓸 수 없습니다.')}
 }
@@ -787,8 +807,8 @@ const CMD={
     toast(spent<need?`자금이 모자라 일부만 수리했습니다 · -${spent}만원`:`함대 수리 완료 · -${spent}만원`)},
   async 2(){const p=here(),id=p.id;
     if(p.role==='earth'){
-      if(S.lover&&!S.joined.gu){S.joined.gu=true;const jm=joinBro('gu');S.money+=3000;beep(880,.2);
-        return msgBox('정보','한울: "그녀를 구해 주었구나. 이제 나도 함께 싸우겠다."\n\n큰형 한울이 군자금 3000만원을 가져왔습니다. 한울의 전함이 '+jm+'\n이제부터는 도움 요청을 할 수 없습니다.')}
+      if(S.lover&&!S.joined.gu){S.joined.gu=true;const jm=joinBro('gu');S.money+=1500;beep(880,.2);
+        return msgBox('정보','한울: "그녀를 구해 주었구나. 이제 나도 함께 싸우겠다."\n\n큰형 한울이 군자금 1500만원을 가져왔습니다. 한울의 전함이 '+jm+'\n이제부터는 도움 요청을 할 수 없습니다.')}
       if(!S.info.p0){S.info.p0=true;const q=PL.find(z=>z.role==='pirate'),dx=q.x-p.x,dy=q.y-p.y;
         const dir=(dy<-1?'북':dy>1?'남':'')+(dx>1?'동':dx<-1?'서':'')||'바로 곁';
         return msgBox('정보',`별 관측소: 인공 행성 가운데 가장 약한 곳은 ${dir}쪽의 해적 기지 「${q.n}」입니다.\n\n지구 근처에서 전투가 벌어지면 큰형 한울이 도와줄 것입니다. 행성을 점령하면 식민지가 되어 다달이 수입을 보냅니다. 민심을 돌보지 않으면 반란이 일어납니다.`)}
@@ -798,11 +818,11 @@ const CMD={
     S.info[id]=true;beep(880,.2);
     switch(p.role){
       case'pirate':return msgBox('정보','우주해적의 근거지를 손에 넣었습니다.\n교역소가 남아 있어 쓰던 무기와 전함을 중고로 팔 수 있습니다. 조선소를 지으면 값싼 해적선도 살 수 있습니다.');
-      case'gold':S.money+=5000;return msgBox('정보','형제는 이곳에 없었습니다.\n대신 적이 숨겨 둔 군자금 5000만원을 찾아냈습니다!');
+      case'gold':S.money+=2500;return msgBox('정보','형제는 이곳에 없었습니다.\n대신 적이 숨겨 둔 군자금 2500만원을 찾아냈습니다!');
       case'heon':S.joined.heon=true;return msgBox('정보','감옥에서 막내 새별을 구출했습니다!\n새별의 전함이 '+joinBro('heon'));
       case'lover':S.lover=true;return msgBox('정보','형제는 없었지만 큰형 한울의 애인이 갇혀 있었습니다.\n그녀를 지구로 데려가 정보를 확인하십시오.');
       case'ok':S.joined.ok=true;return msgBox('정보','둘째 형 마루를 구출했습니다!\n마루의 전함이 '+joinBro('ok'));
-      default:{const m=1000+400*p.tier;S.money+=m;S.exp+=10;return msgBox('정보',`형제의 흔적은 없었습니다.\n버려진 창고에서 ${m}만원어치 물자와 적의 전술 기록(경험 +10)을 손에 넣었습니다.`)}
+      default:{const m=500+200*p.tier;S.money+=m;S.exp+=10;return msgBox('정보',`형제의 흔적은 없었습니다.\n버려진 창고에서 ${m}만원어치 물자와 적의 전술 기록(경험 +10)을 손에 넣었습니다.`)}
     }
   },
   async 3(){await techBox()},
@@ -811,12 +831,12 @@ const CMD={
     if(S.money<cost)return toast(`월급 ${cost}만원(1척당 20만원)이 부족합니다.`);
     S.money-=cost;S.loy=Math.min(100,S.loy+8);beep(700,.08);toast(`월급 지급 · 충성도 +8% · -${cost}만원`)},
   async 5(){const p=here(),types=[...new Set(['fighter','scout',...PT[p.type].ship,'titan'])],lock=t=>SHIPTECH[t]&&!S.tech[SHIPTECH[t]],earth=p.role==='earth',room=()=>canAdd()||(earth&&S.hangar.length<8);
-    for(;;){const i=await listBox('전함구입',types.map(t=>({ic:shipIc(t),label:SHOPN[t],sub:lock(t)?`기술 필요: ${TB[SHIPTECH[t]].n}`:`내구도 ${Math.round(TY[t].hp*hpMul())} · `+(SK[t]?`스킬 ${SK[t]}(${SKD[t]})`:TRD[t]?`특성 ${TRD[t]}(${SKD[t]})`:'스킬 없음'),right:TY[t].price+'만원',off:lock(t)||S.money<TY[t].price||!room()})),
+    for(;;){const i=await listBox('전함구입',types.map(t=>({ic:shipIc(t),label:SHOPN[t],sub:lock(t)?`기술 필요: ${TB[SHIPTECH[t]].n}`:`내구도 ${Math.round(TY[t].hp*hpMul())} · `+(SK[t]?`${SK[t]}: ${SKD[t]}`:'스킬 없음')+(TRD[t]?` · 특성 ${TRD[t]}`:''),right:TY[t].price+'만원',off:lock(t)||S.money<TY[t].price||!room()})),
         `자금 ${S.money}만원 · 함대 ${S.fleet.length}/8척`+(earth?` · 격납고 ${S.hangar.length}/8척`:'')+(canAdd()?'':earth?(room()?' · 새 전함은 격납고로 들어갑니다':' · 자리가 없습니다'):' · 함대가 가득 찼습니다'));
       if(i<0)return;const t=types[i];S.money-=TY[t].price;const toH=!canAdd();(toH?S.hangar:S.fleet).push(ship(t));ui();beep(600,.1);toast(toH?`${SHOPN[t]} · 격납고에 보관`:`${SHOPN[t]} 합류`)}
   },
-  async 6(){await gear('무기구입',W,WP,'w',k=>`공격력 ${WD[k]}`)},
-  async 7(){await gear('보호구입',SH,SP,'sh',k=>`피해 ${Math.round((.2+.07*k)*100)}% 흡수`)},
+  async 6(){await gear('무기구입',W,WP,'w',k=>`공격력 ${WD[k]}`+(WX[k]?' · '+WX[k]:''))},
+  async 7(){await gear('보호구입',SH,SP,'sh',k=>`${Math.round((.2+.07*k)*100)}% 흡수 · ${SX(k)}`)},
   async 8(){await fleetBox('우리 함대',null)},
   async 9(){await colony(here())},
   async 10(){await empire()}
@@ -831,16 +851,18 @@ async function gear(title,names,prices,key,desc){const tk=key==='w'?'w':'s';
 }
 async function run(n){if(busy||mode!=='map'||!cmds()[n])return;busy=true;try{await CMD[n]()}finally{busy=false;save();ui()}}
 async function help(){if(busy||mode!=='map')return;busy=true;
-  await msgBox('도움말','방향키/WASD: 이동 · 숫자키: 명령 · 0/Esc: 나가기 · 스페이스: 전투 속도\n\n행성 배치와 종류, 지키는 세력은 게임마다 달라집니다. 해적을 잡아 자금과 경험을 모으고, 연구소가 있는 행성에서 기술을 개발해 무기와 보호막을 여십시오.\n점령한 행성은 식민지가 됩니다. 내정에서 시설을 짓고 세율을 정하면 8칸 이동마다 한 번씩 수입이 들어옵니다. 충성도가 30% 아래로 떨어지면 반란이 일어날 수 있습니다.\n지도: 노란 느낌표는 새 정보, 붉은 ✕는 호위 함대, 돌무더기는 해적이 많은 소행성대, 보랏빛 칸은 적을 만나지 않는 성운, 빛나는 고리는 웜홀입니다.\n내구도 10 이하인 전함은 자폭 돌격을 합니다.');
+  await msgBox('도움말','방향키/WASD: 이동 · 숫자키: 명령 · 0/Esc: 나가기\n\n행성 배치와 종류, 지키는 세력은 게임마다 달라집니다. 해적을 잡아 자금과 경험을 모으고, 연구소가 있는 행성에서 기술을 개발해 무기와 보호막을 여십시오.\n점령한 행성은 식민지가 됩니다. 내정에서 시설을 짓고 세율을 정하면 8칸 이동마다 한 번씩 수입이 들어옵니다. 충성도는 가만두면 떨어지고, 영토가 넓을수록 더 빨리 식습니다. 35% 아래면 반란이 일어날 수 있고 50% 아래면 수입이 줄어듭니다. 함대가 머무는 행성은 충성도가 오릅니다.\n우리 함대의 장비가 좋아질수록 마주치는 적도 강해집니다. 무기와 보호막은 종류마다 고유한 효과가 있습니다.\n지도: 노란 느낌표는 새 정보, 붉은 ✕는 호위 함대, 돌무더기는 해적이 많은 소행성대, 보랏빛 칸은 적을 만나지 않는 성운, 빛나는 고리는 웜홀입니다.\n내구도 10 이하인 전함은 자폭 돌격을 합니다.');
   busy=false}
 
 /* ---------- enemies ---------- */
+const power=()=>S.fleet.reduce((a,s)=>a+s.w+s.sh+2,0)/Math.max(1,S.fleet.length);
+const pbonus=()=>Math.min(3,Math.floor(power()/4));
 function eUnit(fac,big,t){const m7=v=>clamp(v,-1,7);let u;
   switch(fac){
-    case'pirate':u=big?{n:'해적 모함',hp:110+25*t,w:t+1,sh:t,sk:'volley'}:{n:'해적선',hp:55,w:Math.min(2,t-1),sh:t>=3?0:-1};break;
+    case'pirate':u=big?{n:'해적 모함',hp:110+25*t,w:t+1,sh:t,sk:'volley'}:{n:'해적선',hp:55+8*t,w:Math.min(4,t-1),sh:t>=3?Math.min(3,t-3):-1};break;
     case'machine':u=big?{n:'기계 모선',hp:100+22*t,w:t,sh:t-1,sk:'repair'}:{n:'드론',hp:34+7*t,w:t-1,sh:-1,sd:.4};break;
     case'crystal':u=big?{n:'결정 거함',hp:90+20*t,w:t+1,sh:t+2,shc:.85,sk:'barrier'}:{n:'결정체',hp:34+7*t,w:t-1,sh:t+1,shc:.85};break;
-    case'bio':u=big?{n:'생체 모함',hp:140+30*t,w:t,sh:-1,regen:8+2*t,sk:'volley'}:{n:'포자선',hp:58+12*t,w:t-1,sh:-1,regen:4+t};break;
+    case'bio':u=big?{n:'생체 모함',hp:140+30*t,w:t,sh:-1,regen:8+2*t,sk:'burnall'}:{n:'포자선',hp:58+12*t,w:t-1,sh:-1,regen:4+t};break;
     case'iron':u=big?{n:'중전함',hp:170+35*t,w:t+2,sh:t-2,sk:'snipe'}:{n:'중장갑기',hp:80+16*t,w:t,sh:-1};break;
     default:u=big?{n:'전함',hp:110+25*t,w:t+1,sh:t,sk:'volley'}:{n:'전투기',hp:50+10*t,w:t-1,sh:t>=2?t-2:-1};
   }
@@ -848,16 +870,18 @@ function eUnit(fac,big,t){const m7=v=>clamp(v,-1,7);let u;
   if(!big&&fac!=='pirate'&&t>=2){const r=Math.random();
     if(r<.14){u.n='척후기';u.hp=Math.round(u.hp*.6);u.ev=.3;cls='v'}
     else if(r<.28){u.n='포격기';u.hp=Math.round(u.hp*.75);u.w++;cls='a'}}
-  return{...u,t:`e:${fac}:${cls}`,max:u.hp,w:m7(u.w),sh:m7(u.sh),tint:FA[fac].c}}
+  const base=u.hp,hp=Math.round(u.hp*1.2*(1+power()*.012));
+  return{...u,hp,base,t:`e:${fac}:${cls}`,max:hp,w:m7(u.w),sh:m7(u.sh),tint:FA[fac].c}}
 function gen(x,y){
-  const dE=cheb(x,y,EARTH()),near=nearEnemy(x,y),t=near?near.tier:0;
+  const dE=cheb(x,y,EARTH()),near=nearEnemy(x,y),pb=pbonus(),t=near?Math.min(6,near.tier+(pb>>1)):0;
   if(dE>2&&Math.random()<.06){const e=eUnit(near?near.fac:'legion',true,Math.max(2,t));e.lone=true;return[e]}
   let n=near?ri(3,5)+(t>3?1:0):(dE<=2?ri(2,3):ri(3,5));if(near&&(near.fac==='iron'||near.fac==='bio'))n--;
+  if(pb>=2)n=Math.min(8,n+1);
   const out=[];
-  for(let i=0;i<n;i++)out.push(near&&near.fac!=='pirate'&&Math.random()<.5?eUnit(near.fac,false,t):eUnit('pirate',false,dE<=2?0:Math.max(1,t)));
+  for(let i=0;i<n;i++)out.push(near&&near.fac!=='pirate'&&Math.random()<.5?eUnit(near.fac,false,t):eUnit('pirate',false,(dE<=2?0:Math.max(1,t))+pb));
   return out}
 function planetFleet(p){const[b,s]=FA[p.fac].mix,out=[],hq=p.role==='hq';
-  for(let i=0;i<b;i++){const e=eUnit(p.fac,true,p.tier);if(hq){e.max+=40;e.hp+=40}out.push(e)}
+  for(let i=0;i<b;i++){const e=eUnit(p.fac,true,p.tier);if(hq){e.max+=40;e.hp+=40;e.base+=40}out.push(e)}
   for(let i=0;i<s;i++)out.push(eUnit(p.fac,false,p.tier));return out}
 function guardFleet(){const out=[];for(let i=0;i<2;i++){const e=eUnit('legion',true,5);e.n='호위 전함';out.push(e)}
   for(let i=0;i<6;i++)out.push(eUnit('legion',false,5));return out}
@@ -875,7 +899,7 @@ async function step(nx,ny){
     if(c!==0)return;
     S.x=nx;S.y=ny;
     const r=await battle(fl,{boss:p,noFlee:true,intro:`${p.n} 수비 함대와의 결전!`});
-    if(r==='win'){S.conq[p.id]=true;p.col={loy:45,tax:1,fac:p.pre?[p.pre]:[],rebel:false};
+    if(r==='win'){S.conq[p.id]=true;p.col={loy:40,tax:1,fac:p.pre?[p.pre]:[],rebel:false};
       if(p.role==='hq'){const sum=`${S.month}월 만에 ${PL.filter(owned).length}개의 별을 품고, 기술 ${techCount()}개를 익혔습니다.`;await cine(ending());
         await msgBox('진정한 평화여','블랙홀 군단의 본거지가 무너졌습니다.\n하람 4형제는 별들에 평화를 되찾았습니다.\n'+sum+'\n\n— 끝 —','새 은하로');setState(newState());save();await cine(opening());return}
       await msgBox(`${p.n} 점령`,`행성을 손에 넣어 식민지로 삼았습니다.`+(p.pre?`\n${FAC[p.pre].n}이(가) 남아 있습니다.`:'')+'\n정보를 확인하고 내정에서 시설을 지으십시오.')}
@@ -922,7 +946,7 @@ async function step(nx,ny){
 /* ---------- battle ---------- */
 const stars=Array.from({length:90},()=>[ri(0,639),ri(0,329),Math.random()<.2?2:1,rnd(3,14)]);
 const alive=s=>s.hp>0;
-const bs=ms=>sleep(ms*3/spd);
+const bs=ms=>sleep(ms*6/spd),AD=ms=>ms*2/spd;
 function say(t){bprev.textContent=bmsg.textContent;bmsg.textContent=t}
 function place(){B.pos=new Map();
   B.A.forEach((s,i)=>B.pos.set(s,{x:[168,20][i%2],y:22+Math.floor(i/2)*74,ph:i*1.7}));
@@ -931,52 +955,88 @@ const ctr=s=>{const p=B.pos.get(s);return{x:p.x+66,y:p.y+24}};
 function beam(a,t,tier){const p=ctr(a),q=ctr(t);a.actAt=now();B.fx.push({k:'beam',x1:p.x,y1:p.y,x2:q.x,y2:q.y,tier,t0:now()});beep(300+60*Math.max(0,tier),.05,'sawtooth')}
 function boom(s){const c=ctr(s);B.shake=now()+260;B.fx.push({k:'boom',x:c.x,y:c.y,t0:now(),bits:Array.from({length:22},()=>[rnd(0,6.28),rnd(.2,1),ri(0,3)])});beep(70,.25,'sawtooth',.06)}
 function fl(s,txt,col){const c=ctr(s);B.fx.push({k:'txt',x:c.x+ri(-10,10),y:c.y-12,txt,col,t0:now()})}
-function hit(tg,d,pierce){
+const isE=s=>s.t[0]==='e'&&s.t[1]===':';
+const STAT=[['burn','화상','#ff9955'],['stun','기절','#ffee55'],['blind','실명','#aaeeff'],['mark','표적','#ff5555'],['taunt','도발','#ffffff']];
+function kill(s){boom(s);s.dieAt=now()+AD(160)}
+function afflict(tg,key,turns,label,col){if(tg.hp<=0)return;if(ELEC.includes(tg.sh)){fl(tg,'면역','#ffee55');return}tg[key]=Math.max(tg[key]||0,turns);fl(tg,label,col)}
+function cleanse(list){for(const f of list){f.burn=0;f.stun=0;f.blind=0;f.mark=0}}
+function hit(tg,d,pierce,src){
+  if(tg.hp<=0)return;
   if(!pierce&&tg.thin){tg.thin=false;fl(tg,'막음','#7df');return}
+  if(tg.mark)d*=1.5;
+  if(!isE(tg)&&S.tech.t2)d*=.9;
   if(!pierce&&tg.wall>0){const a=Math.min(tg.wall,Math.round(d));tg.wall-=a;d-=a;if(d<1){fl(tg,'흡수','#fd6');return}}
-  if(!pierce&&tg.sh>=0&&Math.random()<(tg.shc||.6)){d*=1-(.2+.07*tg.sh);tg.flash=now()+220}
+  if(!pierce&&tg.sh>=0&&Math.random()<(tg.shc||.6)){d*=1-(.2+.07*tg.sh);tg.flash=now()+AD(220);
+    if(src&&src!==tg&&src.hp>0&&FIRE.includes(tg.sh)){const r=4+tg.sh;src.hp=Math.max(0,src.hp-r);src.hitAt=now();fl(src,'-'+r,'#ff9955');if(src.hp<=0)kill(src)}}
   d=Math.max(1,Math.round(d));tg.hp=Math.max(0,tg.hp-d);tg.hitAt=now();fl(tg,'-'+d,'#fff');
-  if(tg.hp<=0){boom(tg);tg.dieAt=now()+160}}
+  if(tg.hp<=0)kill(tg)}
+function shot(s,tg,mult,pierce){
+  beam(s,tg,s.w);
+  const miss=(s.w===0?0:.1)+tr(tg,'ev')+(MAG.includes(tg.sh)?.08:0)+(s.blind?.45:0)-(!isE(s)&&S.tech.t0?.08:0);
+  if(Math.random()<miss){fl(tg,'빗나감','#aab');return false}
+  let d=wd(s)*rnd(.8,1.2)*mult*(isE(s)?1.15:1);
+  if(!isE(s)&&S.tech.t1&&Math.random()<.1){d*=1.5;fl(s,'치명타','#ffcc55')}
+  hit(tg,d,pierce,s);return true}
+async function fire(s,tg,lf,d){
+  switch(s.w){
+    case 2:shot(s,tg,1,Math.random()<.35);break;
+    case 3:for(let i=0;i<2&&tg.hp>0&&s.hp>0;i++){shot(s,tg,.55);if(i<1)await bs(d*.45)}break;
+    case 4:{const c=Math.random()<.2;if(c)fl(s,'치명타','#ffcc55');shot(s,tg,c?1.8:1);break}
+    case 5:for(let i=0;i<3&&tg.hp>0&&s.hp>0;i++){shot(s,tg,.4);if(i<2)await bs(d*.35)}break;
+    case 6:if(shot(s,tg,1)&&tg.hp>0&&Math.random()<.35)afflict(tg,'burn',3,'화상','#ff9955');break;
+    case 7:{shot(s,tg,1,Math.random()<.25);const o=lf.filter(x=>x!==tg&&x.hp>0);
+      if(o.length&&s.hp>0){const t2=pick(o);beam(s,t2,7);hit(t2,wd(s)*.35*(isE(s)?1.15:1),false,s)}break}
+    default:shot(s,tg,1)}
+  if(s.blind)s.blind--;
+}
 async function act(s,foes,friends,focus,d){
-  const lf=foes.filter(alive);if(!lf.length||s.hp<=0)return;
-  const tg=(focus&&focus.hp>0)?focus:pick(lf);
+  if(s.hp<=0)return;const lf=foes.filter(alive);if(!lf.length)return;
+  if(s.taunt)s.taunt--;if(s.mark)s.mark--;
+  if(s.burn){s.burn--;s.hp=Math.max(0,s.hp-6);s.hitAt=now();fl(s,'-6','#ff9955');if(s.hp<=0){kill(s);await bs(d*.6);return}}
+  if(s.stun){s.stun--;fl(s,'기절','#ffee55');await bs(d*.6);return}
+  const tn=lf.filter(x=>x.taunt>0),tg=(focus&&focus.hp>0)?focus:pick(tn.length?tn:lf);
   if(s.hp<=Math.max(10,(s.sd||0)*s.max)){say(`${s.n}, 자폭 돌격!`);beam(s,tg,8);const v=s.sd?20+wd(s)*.5:40+wd(s);s.hp=0;s.dieAt=now();boom(s);hit(tg,v);await bs(d*1.6);return}
-  const sk=s.sk||(SK[s.t]?s.t:null);
-  if(sk&&Math.random()<.2){
+  const sk=s.sk||(SK[s.t]?s.t:null),ch=isE(s)?(S.tech.t3?.125:.25):(S.tech.h4?.3:.2);
+  if(sk&&Math.random()<ch){
     say(`${s.n}의 ${ESK[s.sk]||SK[s.t]}!`);s.actAt=now();B.fx.push({k:'cast',s,t0:now()});
-    const heal=v=>{for(const f of friends)if(f.hp>0){f.hp=Math.min(f.max,f.hp+v);fl(f,'+'+v,'#7f7')}beep(880,.15)};
+    const fr=friends.filter(alive);
+    const heal=v=>{for(const f of fr){f.hp=Math.min(f.max,f.hp+v);fl(f,'+'+v,'#7f7')}beep(880,.15)};
     const top=()=>lf.reduce((a,b)=>b.hp>a.hp?b:a);
     switch(sk){
-      case'sung':{const t2=top();beam(s,t2,9);hit(t2,wd(s)*2.5+20);break}
-      case'gu':for(const e of lf){beam(s,e,6);hit(e,ri(35,40))}break;
-      case'ok':heal(30);break;
-      case'heon':case'barrier':case'glacier':for(const f of friends)if(f.hp>0)f.thin=true;beep(990,.15);break;
-      case'cruiser':for(const e of lf){beam(s,e,1);hit(e,14)}break;
+      case'sung':{const t2=top();beam(s,t2,9);hit(t2,wd(s)*2.5+20,false,s);afflict(t2,'stun',1,'기절','#ffee55');break}
+      case'gu':for(const e of lf){beam(s,e,6);hit(e,ri(35,40),false,s)}break;
+      case'ok':cleanse(fr);heal(30);break;
+      case'heon':case'barrier':for(const f of fr)f.thin=true;beep(990,.15);break;
+      case'glacier':cleanse(fr);for(const f of fr)f.thin=true;beep(990,.15);break;
+      case'cruiser':for(const e of lf){beam(s,e,1);hit(e,14,false,s);if(Math.random()<.2)afflict(e,'stun',1,'기절','#ffee55')}break;
       case'cyl':heal(15);break;
-      case'sphere':for(const f of friends)if(f.hp>0)f.wall=25;beep(990,.15);break;
-      case'bird':for(const e of lf){beam(s,e,6);hit(e,12,true);if(e.hp>0)hit(e,12,true)}break;
+      case'sphere':for(const f of fr)f.wall=25;beep(990,.15);break;
+      case'bastion':for(const f of fr)f.wall=40;beep(990,.15);break;
+      case'bird':for(const e of lf){beam(s,e,6);hit(e,12,true);if(e.hp>0)hit(e,12,true);afflict(e,'burn',2,'화상','#ff9955')}break;
       case'green':for(const e of lf.slice().sort((a,b)=>b.hp-a.hp).slice(0,2)){const v=Math.floor(e.hp/2);if(v>0){beam(s,e,7);e.hp-=v;e.hitAt=now();fl(e,'-'+v,'#fd6')}}break;
-      case'frost':for(const e of lf){e.blind=2;fl(e,'실명','#aef')}beep(500,.2,'sine');break;
-      case'steel':for(const e of lf){beam(s,e,3);hit(e,10);if(e.hp>0)hit(e,10)}break;
-      case'titan':for(const e of lf){beam(s,e,7);hit(e,22)}break;
-      case'ember':for(const e of lf){beam(s,e,6);hit(e,18)}break;
-      case'storm':for(const e of lf){beam(s,e,3);hit(e,9,true);if(e.hp>0&&Math.random()<.3){e.blind=2;fl(e,'실명','#aef')}}break;
-      case'tide':{const f=friends.filter(alive).reduce((a,b)=>b.hp/b.max<a.hp/a.max?b:a);f.hp=Math.min(f.max,f.hp+40);fl(f,'+40','#7f7');beep(880,.15);break}
-      case'bastion':for(const f of friends)if(f.hp>0)f.wall=40;beep(990,.15);break;
-      case'raider':beam(s,tg,8);hit(tg,wd(s)*2+10);break;
+      case'frost':for(const e of lf)afflict(e,'blind',2,'실명','#aaeeff');beep(500,.2,'sine');break;
+      case'steel':for(const e of lf){beam(s,e,3);hit(e,10,false,s);if(e.hp>0)hit(e,10,false,s)}break;
+      case'titan':for(const e of lf){beam(s,e,7);hit(e,22,false,s)}break;
+      case'ember':for(const e of lf){beam(s,e,6);hit(e,10,false,s);afflict(e,'burn',3,'화상','#ff9955')}break;
+      case'spore':case'burnall':for(const e of lf){beam(s,e,5);hit(e,5,true);afflict(e,'burn',3,'화상','#ff9955')}break;
+      case'storm':for(const e of lf){beam(s,e,3);hit(e,9,true);if(Math.random()<.3)afflict(e,'stun',1,'기절','#ffee55')}break;
+      case'tide':{const f=fr.reduce((a,b)=>b.hp/b.max<a.hp/a.max?b:a);f.hp=Math.min(f.max,f.hp+40);fl(f,'+40','#7f7');beep(880,.15);break}
+      case'raider':beam(s,tg,8);hit(tg,wd(s)*2+10,false,s);if(!isE(s)){S.money+=30;fl(s,'+30만','#ffcc55')}break;
+      case'scout':{const t2=top();beam(s,t2,1);t2.mark=3;fl(t2,'표적','#ff5555');break}
+      case'mirage':for(const e of lf){beam(s,e,4);e.thin=false;e.wall=0;hit(e,8,false,s)}break;
+      case'boulder':s.taunt=3;s.wall=(s.wall||0)+20;fl(s,'도발','#ffffff');beep(300,.2);break;
       case'volley':for(const e of lf){beam(s,e,3);hit(e,6+Math.max(0,s.w),true)}break;
       case'repair':heal(12+2*Math.max(0,s.w));break;
-      case'snipe':{const t2=top();beam(s,t2,9);hit(t2,wd(s)*2+15);break}
+      case'snipe':{const t2=top();beam(s,t2,9);hit(t2,wd(s)*2+15,false,s);if(Math.random()<.3)afflict(t2,'stun',1,'기절','#ffee55');break}
     }
     await bs(d*2);return}
-  beam(s,tg,s.w);
-  const miss=.1+tr(tg,'ev')+(s.blind?.45:0);if(s.blind)s.blind--;
-  if(Math.random()<miss)fl(tg,'빗나감','#aab');else hit(tg,wd(s)*rnd(.8,1.2));
+  await fire(s,tg,lf,d);
   await bs(d);
 }
+const regenOf=s=>tr(s,'regen')+(!isE(s)&&S.tech.e4?3:0);
 async function sideTurn(mine,foes,focus,d){for(const s of mine.slice()){if(!foes.some(alive))break;await act(s,foes,mine,focus,d)}
-  let any=false;for(const s of mine)if(s.hp>0&&tr(s,'regen')&&s.hp<s.max&&foes.some(alive)){const v=Math.min(tr(s,'regen'),s.max-s.hp);s.hp+=v;fl(s,'+'+v,'#7f7');any=true}
-  if(any)await bs(d)}
+  let any=false;for(const s of mine)if(s.hp>0&&regenOf(s)&&s.hp<s.max&&foes.some(alive)){const v=Math.min(regenOf(s),s.max-s.hp);s.hp+=v;fl(s,'+'+v,'#7f7');any=true}
+  if(any)await bs(d*.6)}
 function bask(btns){return new Promise(res=>{
   bb.innerHTML=btns.map((b,i)=>`<button data-i="${i}"><kbd>${i+1}</kbd>${b}</button>`).join('');
   const done=i=>{keyFn=null;bb.onclick=null;bb.innerHTML='';res(i)};
@@ -992,6 +1052,7 @@ async function battle(E,o){
   B={A:[...S.fleet],E,fx:[],boss:o.boss,selecting:false,t0:now(),shake:0};place();setMode('battle');
   bprev.textContent='';bmsg.textContent='';hover=null;sfx.alarm();setMusic(o.boss?'boss':'battle');
   say(o.intro||(E[0].lone?`${E[0].n} 한 척이 홀로 나타났다!`:`적 함대 ${E.length}척과 마주쳤다!`));
+  if(S.tech.t4){await bs(250);say('기습 전술! 선제 포격을 퍼붓는다.');const a0=B.A[0];for(const e of E){beam(a0,e,2);hit(e,10,false)}await bs(300)}
   let auto=false,res=null,helped=false;const dE=cheb(S.x,S.y,EARTH());
   while(!res){
     if(!B.E.some(alive)){res='win';break}
@@ -1016,7 +1077,7 @@ async function battle(E,o){
         await sideTurn(B.E,B.A,null,200);continue;
       }
     }
-    const d=auto?150:230;
+    const d=auto?170:230;
     await sideTurn(B.A,B.E,focus,d);
     await sideTurn(B.E,B.A,null,d);
   }
@@ -1024,15 +1085,15 @@ async function battle(E,o){
   bb.innerHTML='';say(res==='win'?'적 함대를 물리쳤다!':res==='flee'?'전장에서 이탈한다!':'함대가 전멸했다...');
   await sleep(750);
   const lost=S.fleet.filter(s=>s.hp<=0).length;
-  S.fleet=S.fleet.filter(alive);S.fleet.forEach(s=>{delete s.thin;delete s.wall;delete s.flash;delete s.dieAt;delete s.hitAt;delete s.actAt;delete s.blind});
+  S.fleet=S.fleet.filter(alive);S.fleet.forEach(s=>{delete s.thin;delete s.wall;delete s.flash;delete s.dieAt;delete s.hitAt;delete s.actAt;delete s.blind;delete s.burn;delete s.stun;delete s.mark;delete s.taunt});
   setMode('map');setMusic('map');B=null;ui();
   if(!S.fleet.some(s=>BRO.includes(s.t))){
     setMusic(null);await cine(gameover());setMusic('map');
     await msgBox('게임 오버','하람과 형제들의 전함이 모두 격침되었습니다.\n별들은 블랙홀 군단의 손에 넘어갔습니다.','새 은하에서 다시');
     setState(newState());save();await cine(opening());return'over'}
   if(res==='win'){
-    let m=0;for(const e of E)m+=40+Math.round(e.max/2)+(e.w+1)*25;
-    if(E[0].lone)m+=ri(800,1000);if(o.boss)m+=o.boss.tier*500;
+    let m=0;for(const e of E)m+=40+Math.round((e.base||e.max)/2)+(e.w+1)*25;
+    if(E[0].lone)m+=ri(800,1000);if(o.boss)m+=o.boss.tier*500;m=Math.round(m/2);
     const x=E.length+(o.boss?15:0);S.money+=m;S.exp+=x;S.loy=Math.max(0,S.loy-2);
     let txt=`자금 +${m}만원\n경험 +${x}`;if(lost)txt+=`\n아군 ${lost}척 격침`;
     if(S.tech.e1){for(const s of S.fleet)s.hp=Math.min(s.max,s.hp+Math.round(s.max*.1));txt+='\n응급 수리 기술이 내구도를 10% 되살렸습니다.'}
@@ -1046,8 +1107,8 @@ async function battle(E,o){
 function drawShip(s,i,flip,t){const p=B.pos.get(s);if(!p)return;
   if(s.hp>0||(s.dieAt&&t<s.dieAt)){
     let x=p.x,y=p.y+Math.round(Math.sin(t/520+p.ph)*2);const dir=flip?-1:1;
-    if(s.actAt&&t-s.actAt<170)x+=dir*Math.round(10*Math.sin((t-s.actAt)/170*Math.PI));
-    const hitNow=s.hitAt&&t-s.hitAt<150;if(hitNow)x+=(Math.floor(t/30)%2)?3:-3;
+    if(s.actAt&&t-s.actAt<AD(170))x+=dir*Math.round(10*Math.sin((t-s.actAt)/AD(170)*Math.PI));
+    const hitNow=s.hitAt&&t-s.hitAt<AD(150);if(hitNow)x+=(Math.floor(t/30)%2)?3:-3;
     const im=sprite(s.t,s.tint);
     g.save();if(flip){g.translate(x+135,y-3);g.scale(-1,1)}else g.translate(x-3,y-3);
     if(im.flame){const f=5+((Math.floor(t/70)+i)%3)*4;g.fillStyle=im.flame;g.fillRect(4-f,25,f,6);g.fillStyle='#fff';g.fillRect(4-Math.floor(f/2),27,Math.floor(f/2),3)}
@@ -1059,7 +1120,8 @@ function drawShip(s,i,flip,t){const p=B.pos.get(s);if(!p)return;
   if(s.hp>0){const by=p.y+53,r=s.hp/s.max;
     g.drawImage(iconCv('w',s.w),p.x,by-4,14,14);g.drawImage(iconCv('s',s.sh),p.x+16,by-4,14,14);
     g.fillStyle='#000';g.fillRect(p.x+34,by,66,7);g.fillStyle=hpCol(r);g.fillRect(p.x+35,by+1,Math.max(1,Math.round(64*r)),5);
-    g.font='17px "Do Hyeon",sans-serif';g.textAlign='left';txt(s.hp,p.x+104,by+8,s.blind?'#aef':'#ffc857');
+    g.font='17px "Do Hyeon",sans-serif';g.textAlign='left';txt(s.hp,p.x+104,by+8,'#ffc857');
+    let sx=p.x+35;for(const[k,,c]of STAT)if(s[k]>0){g.fillStyle='#000';g.fillRect(sx-1,by-7,7,6);g.fillStyle=c;g.fillRect(sx,by-6,5,4);sx+=8}
     if(flip&&B.selecting){g.fillStyle='#ffc857';g.fillRect(p.x-4,p.y-4,18,18);g.fillStyle='#000';g.textAlign='center';g.fillText(i+1,p.x+5,p.y+10)}}
 }
 function drawBattle(t){
@@ -1069,8 +1131,8 @@ function drawBattle(t){
   for(const s of stars){g.fillStyle=s[2]>1?'#fff':'#9aa0c8';g.fillRect(Math.round(((s[0]-t*s[3]/1000)%640+640)%640),s[1],s[2],s[2])}
   if(B.boss){const sz=216;g.globalAlpha=.42;g.drawImage(planetCv(B.boss,24),150-sz/2,165-sz/2,sz,sz);g.globalAlpha=1}
   B.A.forEach((s,i)=>drawShip(s,i,false,t));B.E.forEach((s,i)=>drawShip(s,i,true,t));
-  B.fx=B.fx.filter(f=>t-f.t0<(f.k==='beam'?210:f.k==='boom'?560:f.k==='cast'?420:760));
-  for(const f of B.fx){const a=t-f.t0;
+  const af=2/spd;B.fx=B.fx.filter(f=>(t-f.t0)/af<(f.k==='beam'?210:f.k==='boom'?560:f.k==='cast'?420:760));
+  for(const f of B.fx){const a=(t-f.t0)/af;
     if(f.k==='beam'){const ti=Math.max(0,f.tier),col=BC[Math.min(9,ti)],al=1-a/210,w=2+Math.min(ti,7)*.9;
       g.lineCap='butt';g.strokeStyle=col;g.globalAlpha=al*.3;g.lineWidth=w*2.6;g.beginPath();g.moveTo(f.x1,f.y1);g.lineTo(f.x2,f.y2);g.stroke();
       g.globalAlpha=al;g.lineWidth=w;g.beginPath();g.moveTo(f.x1,f.y1);g.lineTo(f.x2,f.y2);g.stroke();
@@ -1087,7 +1149,7 @@ function drawBattle(t){
     if(s){const p=B.pos.get(s),skn=ESK[s.sk]||SK[s.t];
       if(B.selecting&&B.E.includes(s)){g.fillStyle='#ffc857';const x0=p.x-8,y0=p.y-8,x1=p.x+140,y1=p.y+56,L=12;
         for(const[cx,cy,sx,sy]of[[x0,y0,1,1],[x1,y0,-1,1],[x0,y1,1,-1],[x1,y1,-1,-1]]){g.fillRect(sx>0?cx:cx-L,cy-(sy>0?0:2),L,2);g.fillRect(cx-(sx>0?0:2),sy>0?cy:cy-L,2,L)}}
-      const lab=`${s.n} · ${wn(s)} · ${sn(s)}`+(skn?` · ${skn}`:'')+(tr(s,'regen')?' · 재생':'')+(tr(s,'ev')?' · 회피':'')+(s.sd?' · 자폭':'');g.font='14px "Do Hyeon",sans-serif';g.textAlign='left';
+      const lab=`${s.n} · ${wn(s)} · ${sn(s)}`+(skn?` · ${skn}`:'')+(tr(s,'regen')?' · 재생':'')+(tr(s,'ev')?' · 회피':'')+(s.sd?' · 자폭':'')+STAT.filter(z=>s[z[0]]>0).map(z=>' · '+z[1]).join('');g.font='14px "Do Hyeon",sans-serif';g.textAlign='left';
       const w=g.measureText(lab).width+12,tx=Math.max(4,Math.min(636-w,p.x)),ty=Math.max(2,p.y-26);
       g.fillStyle='rgba(14,10,8,.92)';g.fillRect(tx,ty,w,19);g.strokeStyle='#ffc857';g.lineWidth=1;g.strokeRect(tx+.5,ty+.5,w-1,18);
       g.fillStyle='#f1ead6';g.fillText(lab,tx+6,ty+14)}}
@@ -1175,10 +1237,9 @@ function gameover(){const hq=HQ(),info=`${S.month}월 · 영토 ${PL.filter(owne
 
 /* ---------- loop and input ---------- */
 function frame(t){if(C)drawCine(t);else if(mode==='battle'&&B)drawBattle(t);else drawMap(t);requestAnimationFrame(frame)}
-function setSpd(v){spd=v;$('bSpd').textContent='속도 ×'+spd;saveSet()}
+function setSpd(v){spd=v;$('bSpd').textContent=spd+'배속';saveSet()}
 document.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey)return;const k=e.key;
-  if(mode==='battle'&&e.code==='Space'){e.preventDefault();setSpd(spd>=8?1:spd*2);return}
   if(keyFn){if(k.length===1||/^Key[A-Z]$/.test(e.code)||['Enter','Escape','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(k)){sfx.click();keyFn(k,e.code);e.preventDefault()}return}
   if(mode!=='map'||busy)return;
   const mv={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[k]||{KeyW:[0,-1],KeyS:[0,1],KeyA:[-1,0],KeyD:[1,0]}[e.code];
@@ -1198,7 +1259,7 @@ cv.addEventListener('click',e=>{const{x,y}=cpos(e);
   if(Math.abs(dx)>=Math.abs(dy))move(Math.sign(dx),0);else move(0,Math.sign(dy))});
 [['pU',0,-1],['pD',0,1],['pL',-1,0],['pR',1,0]].forEach(([id,dx,dy])=>$(id).addEventListener('click',()=>move(dx,dy)));
 $('bHelp').addEventListener('click',help);
-$('bSpd').addEventListener('click',()=>setSpd(spd>=8?1:spd*2));
+$('bSpd').addEventListener('click',()=>setSpd(spd===1?2:1));
 $('bSnd').addEventListener('click',e=>{snd=!snd;e.currentTarget.textContent=snd?'효과음 켜짐':'효과음 꺼짐';saveSet()});
 $('bBgm').addEventListener('click',e=>{bgm=!bgm;e.currentTarget.textContent=bgm?'음악 켜짐':'음악 꺼짐';if(musG)musG.gain.value=bgm?.55:0;mus.next=0;saveSet()});
 $('bFull').addEventListener('click',()=>{try{if(document.fullscreenElement)document.exitFullscreen();else{const p=$('stage').requestFullscreen();if(p&&p.catch)p.catch(()=>toast('이 화면에서는 전체 화면을 쓸 수 없습니다.'))}}catch(e){toast('이 화면에서는 전체 화면을 쓸 수 없습니다.')}});
@@ -1217,7 +1278,7 @@ function sanitize(o){
     const type=PT[p.type]?p.type:'rock',size=num(p.size,0,2,1);
     const q={id:'p'+i,n:name(p.n,'이름 없는 별 '+i),x:num(p.x,0,COLS-1,0),y:num(p.y,0,ROWS-1,0),type,size,role:roles.includes(p.role)?p.role:'bonus',
       tier:num(p.tier,0,6,1),fac:FA[p.fac]?p.fac:'legion',seed:num(p.seed,0,9999,0),ring:!!p.ring,pre:FAC[p.pre]?p.pre:null};
-    if(p.col&&typeof p.col==='object')q.col={loy:num(p.col.loy,0,100,50),tax:num(p.col.tax,0,2,1),fac:(Array.isArray(p.col.fac)?p.col.fac:[]).filter(f=>FAC[f]).slice(0,7),rebel:!!p.col.rebel};
+    if(p.col&&typeof p.col==='object')q.col={loy:num(p.col.loy,0,100,50),tax:num(p.col.tax,0,2,1),fac:(Array.isArray(p.col.fac)?p.col.fac:[]).filter(f=>FAC[f]).slice(0,7),rebel:!!p.col.rebel,martial:!!p.col.martial};
     return q});
   if(pl.includes(null)||pl.length<3||pl[0].role!=='earth'||pl.filter(p=>p.role==='hq').length!==1||pl.filter(p=>p.role==='earth').length!==1)return null;
   if(!pl[0].col)pl[0].col={loy:100,tax:1,fac:['yard','arsenal','lab'],rebel:false};pl[0].col.rebel=false;
@@ -1282,7 +1343,7 @@ async function title(){
   save();if(!sv||c===1)await cine(opening());
   busy=false;ui();
 }
-setState(newState());fit();$('bSpd').textContent='속도 ×'+spd;$('bSnd').textContent=snd?'효과음 켜짐':'효과음 꺼짐';$('bBgm').textContent=bgm?'음악 켜짐':'음악 꺼짐';
+setState(newState());fit();$('bSpd').textContent=spd+'배속';$('bSnd').textContent=snd?'효과음 켜짐':'효과음 꺼짐';$('bBgm').textContent=bgm?'음악 켜짐':'음악 꺼짐';
 requestAnimationFrame(frame);title();
 if(document.fonts&&document.fonts.load)document.fonts.load('24px "Do Hyeon"').catch(()=>{});
 })();
