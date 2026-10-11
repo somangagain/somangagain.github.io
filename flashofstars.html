@@ -86,6 +86,8 @@ kbd{font:inherit;color:var(--yellow);border:1px solid currentColor;padding:0 .28
 .win h2{margin:0;font-weight:400;color:var(--yellow);font-size:1.3em;background:var(--olive-lo);padding:.1em .6em}
 .win .body{padding:.5em .8em;display:flex;flex-direction:column;gap:.4em;overflow:auto;flex:1;min-height:0}
 .win .txt{white-space:pre-line;color:var(--cream)}
+.win input[type=text]{width:100%;box-sizing:border-box;background:#0e0b09;color:var(--cream);border:1px solid var(--olive-hi);font:inherit;font-size:1.2em;padding:.2em .5em}
+.win input[type=text]:focus{outline:2px solid var(--yellow)}
 .win textarea{width:100%;box-sizing:border-box;height:7em;background:#0e0b09;color:var(--cream);border:1px solid var(--olive-hi);font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;resize:none}
 .win .list{display:flex;flex-direction:column}
 .win .list button{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:.5em;text-align:left;padding:.08em .3em}
@@ -169,7 +171,7 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
 <main class="wrap">
   <header class="top">
     <h1>별빛 섬광</h1>
-    <p id="ver">v0.24</p>
+    <p id="ver">v0.25</p>
   </header>
 
   <div class="stage" id="stage">
@@ -320,6 +322,7 @@ const COLS=17,ROWS=12,CELL=24,OX=6,OY=11;
 const cheb=(x,y,p)=>Math.max(Math.abs(x-p.x),Math.abs(y-p.y));
 
 /* ---------- state ---------- */
+let typing=false;
 let S,PL=[],mode='map',busy=false,keyFn=null,B=null,targetFn=null,hover=null;
 let V={x:6,y:5,face:1},trail=[];
 const hpMul=()=>1+(S&&S.tech.e0?.1:0)+(S&&S.tech.e2?.1:0);
@@ -531,7 +534,8 @@ function mkSprite(type,tint){
   const im=x.getImageData(0,0,46,18),d=im.data,op=(a,b)=>a>=0&&b>=0&&a<46&&b<18&&d[(b*46+a)*4+3]>0,edge=[];
   for(let b=0;b<18;b++)for(let a=0;a<46;a++)if(!op(a,b)&&(op(a-1,b)||op(a+1,b)||op(a,b-1)||op(a,b+1)))edge.push([a,b]);
   x.setTransform(1,0,0,1,0,0);x.fillStyle='#07071a';for(const[a,b]of edge)x.fillRect(a,b,1,1);
-  c.flame=flame;return c;
+  let rear=2;for(let a=0;a<46;a++)if(op(a,8)||op(a,9)||op(a,10)){rear=a;break}
+  c.flame=flame;c.rear=rear;return c;
 }
 const pcache={};
 function planetCv(p,n){const k=p.id+':'+n;if(pcache[k])return pcache[k];
@@ -631,7 +635,7 @@ function drawMap(t){
     const hw=g.measureText(p.n).width/2+2,up=p.y===ROWS-1,ly=up?cy-sz/2-4:cy+sz/2+10,lx=clamp(cx,hw,420-hw);txt(p.n,lx,ly,mine?(p.col.rebel?'#ff8a7a':'#bfeee0'):shade(FA[p.fac].c,1.15));
     if(mine&&p.role!=='earth'){const c=p.col,by=up?ly-15:ly+3,bx=clamp(lx-13,2,392),d=dl(p);
       g.fillStyle='#000';g.fillRect(bx-1,by-1,24,5);g.fillStyle=c.rebel?(Math.floor(t/300)%2?'#ff4d3b':'#801008'):c.loy<50?'#ff8a3b':c.loy<70?'#ffd23b':'#5fd35f';g.fillRect(bx,by,Math.max(1,Math.round(22*c.loy/100)),3);
-      if(!c.rebel&&d){g.fillStyle=d>0?'#5fd35f':'#ff4d3b';const ax=bx+26,s=d>0?-1:1;g.fillRect(ax,by+1+s,5,1);g.fillRect(ax+1,by+1,3,1);g.fillRect(ax+2,by+1-s,1,1)}
+      {g.font='10px "Do Hyeon",sans-serif';const tx=c.rebel?'반란 중':`+${inc(p)} · ${c.loy}%(${sign(d)})`,tw=g.measureText(tx).width/2+2;txt(tx,clamp(lx,tw,420-tw),up?by-3:by+12,c.rebel?'#ff8a7a':c.loy<50?'#ffb070':'#e8dcc0');g.font='11px "Do Hyeon",sans-serif'}
       if(c.martial){g.fillStyle='#fff';g.fillRect(bx-6,by-1,3,5);g.fillStyle='#000';g.fillRect(bx-5,by,1,3)}
       if(c.ev&&c.ev.m===S.month){g.fillStyle=Math.floor(t/400)%2?'#ff8a3b':'#ffc857';g.fillRect(cx-sz/2-5,cy+sz/2-4,4,4)}}
     if(p.role!=='earth'&&mine){g.fillStyle='#e8e8f0';g.fillRect(cx+8,cy-16,1,9);g.fillStyle=p.col.rebel?(Math.floor(t/300)%2?'#ff4d3b':'#801008'):'#7fe3c4';g.fillRect(cx+9,cy-16,6,4)}
@@ -694,7 +698,7 @@ function ui(){
 }
 function cmds(){const p=here(),c={};
   if(p&&owned(p)&&!p.col.rebel){const f=k=>p.col.fac.includes(k);
-    if(f('yard')){const need=S.fleet.reduce((a,s)=>a+s.max-s.hp,0);c[1]={l:'수리',c:need?need+'만':''};c[5]={l:'전함구입'}}
+    if(f('yard')){const need=S.fleet.reduce((a,s)=>a+s.max-s.hp,0);c[1]={l:'수리',c:need?Math.ceil(need*.9)+'만':''};c[5]={l:'전함구입'}}
     c[2]={l:'정보',dot:hasNews(p)};
     if(f('lab'))c[3]={l:'개발'};
     if(f('arsenal')){c[6]={l:'무기구입'};c[7]={l:'보호구입'}}
@@ -716,6 +720,13 @@ function listBox(title,items,note='',text='',cls=''){return new Promise(res=>{
   const done=i=>{closeDlg();res(i)};
   dlg.onclick=e=>{const b=e.target.closest('button[data-i]');if(b&&!b.disabled)done(+b.dataset.i)};
   keyFn=k=>{if((k==='Escape'||k==='0')&&!cls)done(-1);else if(/^[1-9]$/.test(k)){const i=+k-1;if(items[i]&&!items[i].off)done(i)}else if(cls&&k==='Enter')done(0);return true};})}
+const cleanName=v=>String(v||'').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣA-Za-z0-9 ]/g,'').trim().slice(0,8);
+function inputBox(title,text,def){return new Promise(res=>{
+  openDlg(`<div class="win"><h2>${title}</h2><div class="body"><div class="txt">${text}</div><input id="nameIn" type="text" maxlength="8" autocomplete="off" spellcheck="false"></div><div class="foot"><button data-i="0">그대로 두기</button><button data-i="1"><kbd>↵</kbd>확인</button></div></div>`);
+  const el=$('nameIn');el.value=def;typing=true;el.focus();el.select();
+  const done=ok=>{const v=ok?cleanName(el.value):'';typing=false;closeDlg();res(v||def)};
+  dlg.onclick=e=>{const b=e.target.closest('button');if(b)done(b.dataset.i==='1')};
+  keyFn=k=>{if(k==='Enter')done(true);else if(k==='Escape')done(false);return true};})}
 function fleetBox(prompt,pickable,list){return new Promise(res=>{
   const f=list||S.fleet,ok=s=>!pickable||pickable(s);
   openDlg(`<div class="win full"><div class="fleet">`+f.map((s,i)=>`<button class="card ${ok(s)?'':'dim'}" data-i="${i}">${pickable&&ok(s)?`<kbd>${i+1}</kbd>`:''}<canvas width="138" height="54"></canvas><b>${s.n}</b><i>${icon('w',s.w)}${wn(s)}</i><i>${icon('s',s.sh)}${sn(s)}</i><small>${SK[s.t]||TRD[s.t]||'스킬 없음'}</small><em style="--v:${Math.round(s.hp/s.max*100)}%;--c:${shade(hpCol(s.hp/s.max),.55)}">${s.hp}/${s.max}</em></button>`).join('')+
@@ -842,9 +853,9 @@ const CMD={
     const need=S.fleet.reduce((a,s)=>a+s.max-s.hp,0);
     if(!need)return toast('모든 전함이 온전합니다.');
     if(!S.money)return toast('수리할 자금이 없습니다.');
-    let spent=0;for(const s of S.fleet){const d=Math.min(s.max-s.hp,S.money-spent);s.hp+=d;spent+=d}
-    S.money-=spent;beep(660,.1);
-    toast(spent<need?`자금이 모자라 일부만 수리했습니다 · -${spent}만원`:`함대 수리 완료 · -${spent}만원`)},
+    let left=Math.floor(S.money/.9),healed=0;for(const s of S.fleet){const d=Math.min(s.max-s.hp,left);s.hp+=d;left-=d;healed+=d}
+    const spent=Math.min(S.money,Math.ceil(healed*.9));S.money-=spent;beep(660,.1);
+    toast(healed<need?`자금이 모자라 일부만 수리했습니다 · -${spent}만원`:`함대 수리 완료 · -${spent}만원`)},
   async 2(){const p=here(),id=p.id;
     if(p.role==='earth'){
       if(S.lover&&!S.joined.gu){S.joined.gu=true;const jm=joinBro('gu');S.money+=1500;beep(880,.2);
@@ -873,11 +884,13 @@ const CMD={
   async 5(){const p=here(),types=[...new Set(['fighter','scout',...PT[p.type].ship,'titan'])],lock=t=>SHIPTECH[t]&&!S.tech[SHIPTECH[t]],earth=p.role==='earth',room=()=>canAdd()||(earth&&S.hangar.length<8);
     for(;;){const i=await listBox('전함구입',types.map(t=>({ic:shipIc(t),label:SHOPN[t],sub:lock(t)?`기술 필요: ${TB[SHIPTECH[t]].n}`:`내구도 ${Math.round(TY[t].hp*hpMul())} · `+(SK[t]?`${SK[t]}: ${SKD[t]}`:'스킬 없음')+(TRD[t]?` · 특성 ${TRD[t]}`:''),right:TY[t].price+'만원',off:lock(t)||S.money<TY[t].price||!room()})),
         `자금 ${S.money}만원 · 함대 ${S.fleet.length}/8척`+(earth?` · 격납고 ${S.hangar.length}/8척`:'')+(canAdd()?'':earth?(room()?' · 새 전함은 격납고로 들어갑니다':' · 자리가 없습니다'):' · 함대가 가득 찼습니다'));
-      if(i<0)return;const t=types[i];S.money-=TY[t].price;const toH=!canAdd();(toH?S.hangar:S.fleet).push(ship(t));ui();beep(600,.1);toast(toH?`${SHOPN[t]} · 격납고에 보관`:`${SHOPN[t]} 합류`)}
+      if(i<0)return;const t=types[i];S.money-=TY[t].price;const toH=!canAdd(),ns=ship(t);(toH?S.hangar:S.fleet).push(ns);ui();beep(600,.1);
+      ns.n=await inputBox('전함 이름',`새 ${SHOPN[t]}의 이름을 지어 주세요. (8자까지, 한글·영문·숫자)`,ns.n);ui();toast(toH?`${SHOPN[t]} · 격납고에 보관`:`${SHOPN[t]} 합류`)}
   },
   async 6(){await gear('무기구입',W,WP,'w',k=>`공격력 ${WD[k]}`+(WX[k]?' · '+WX[k]:''))},
   async 7(){await gear('보호구입',SH,SP,'sh',k=>`${Math.round((.2+.07*k)*100)}% 흡수 · ${SX(k)}`)},
-  async 8(){await fleetBox('우리 함대',null)},
+  async 8(){for(;;){const i=await fleetBox('우리 함대 · 전함을 고르면 이름을 바꿀 수 있습니다',()=>true);if(i<0)return;
+    const s=S.fleet[i];s.n=await inputBox('전함 이름',`${SK[s.t]||TRD[s.t]||TY[s.t].n} · 새 이름을 적어 주세요. (8자까지)`,s.n)}},
   async 9(){await colony(here())},
   async 10(){await empire()}
 };
@@ -891,7 +904,7 @@ async function gear(title,names,prices,key,desc){const tk=key==='w'?'w':'s';
 }
 async function run(n){if(busy||mode!=='map'||!cmds()[n])return;busy=true;try{await CMD[n]()}finally{busy=false;save();ui()}}
 async function help(){if(busy||mode!=='map')return;busy=true;
-  await msgBox('도움말','방향키/WASD: 이동 · 숫자키: 명령 · 0/Esc: 나가기\n\n행성 배치와 종류, 지키는 세력은 게임마다 달라집니다. 해적을 잡아 자금과 경험을 모으고, 연구소가 있는 행성에서 기술을 개발해 무기와 보호막을 여십시오.\n점령한 행성은 식민지가 됩니다. 내정에서 시설을 짓고 세율을 정하면 전투를 4번 치를 때마다 한 달이 지나 수입이 들어옵니다. 충성도는 가만두면 떨어지고, 영토가 넓을수록 더 빨리 식습니다. 50% 아래면 반란이 일어날 수 있고 수입도 줄어듭니다. 식민지 근처(2칸 이내)에서 전투에 이기면 그 행성 충성도가 1 오릅니다.\n적 습격대가 식민지 근처에 나타나 행성이나 함대를 노립니다. 방어 시설을 지어 두면 행성이 스스로 막아냅니다.\n우리 함대의 장비가 좋아질수록 마주치는 적도 강해집니다. 무기와 보호막은 종류마다 고유한 효과가 있습니다.\n지도: 노란 느낌표는 새 정보, 붉은 ✕는 호위 함대, 돌무더기는 해적이 많은 소행성대, 보랏빛 칸은 적을 만나지 않는 성운, 빛나는 고리는 웜홀입니다.\n내구도 10 이하인 전함은 자폭 돌격을 합니다.');
+  await msgBox('도움말','방향키/WASD: 이동 · 숫자키: 명령 · 0/Esc: 나가기\n\n행성 배치와 종류, 지키는 세력은 게임마다 달라집니다. 해적을 잡아 자금과 경험을 모으고, 연구소가 있는 행성에서 기술을 개발해 무기와 보호막을 여십시오.\n점령한 행성은 식민지가 됩니다. 내정에서 시설을 짓고 세율을 정하면 전투를 4번 치를 때마다 한 달이 지나 수입이 들어옵니다. 충성도는 가만두면 떨어지고, 영토가 넓을수록 더 빨리 식습니다. 50% 아래면 반란이 일어날 수 있고 수입도 줄어듭니다. 식민지 근처(2칸 이내)에서 전투에 이기면 그 행성 충성도가 1 오릅니다.\n적 습격대가 식민지 근처에 나타나 행성이나 함대를 노립니다. 방어 시설을 지어 두면 행성이 스스로 막아냅니다.\n우리 함대의 장비가 좋아질수록 마주치는 적도 강해집니다. 무기와 보호막은 종류마다 고유한 효과가 있습니다.\n지도: 노란 느낌표는 새 정보, 붉은 ✕는 호위 함대, 돌무더기는 해적이 많은 소행성대, 보랏빛 칸은 적을 만나지 않는 성운, 빛나는 고리는 웜홀입니다.\n내구도가 10 이하로 떨어진 적은 자폭 돌격을 해 옵니다. 우리 전함은 자폭하지 않습니다.');
   busy=false}
 
 /* ---------- enemies ---------- */
@@ -910,18 +923,18 @@ function eUnit(fac,big,t){const m7=v=>clamp(v,-1,7);let u;
   if(!big&&fac!=='pirate'&&t>=2){const r=Math.random();
     if(r<.14){u.n='척후기';u.hp=Math.round(u.hp*.6);u.ev=.3;cls='v'}
     else if(r<.28){u.n='포격기';u.hp=Math.round(u.hp*.75);u.w++;cls='a'}}
-  const base=u.hp,hp=Math.round(u.hp*1.2*(1+power()*.012));
+  const base=u.hp,hp=Math.round(u.hp*1.08*(1+power()*.012));
   return{...u,hp,base,t:`e:${fac}:${cls}`,max:hp,w:m7(u.w),sh:m7(u.sh),tint:FA[fac].c}}
 function elite(u){u.elite=true;u.n='정예 '+u.n;u.hp=u.max=Math.round(u.max*1.6);u.base=Math.round(u.base*1.6);u.w=Math.min(7,u.w+1);u.sh=Math.min(7,u.sh+1);
   if(!u.sk)u.sk=pick(['volley','snipe','barrier','repair','burnall']);return u}
 function gen(x,y){
   const dE=cheb(x,y,EARTH()),near=nearEnemy(x,y),pb=pbonus(),t=near?Math.min(6,near.tier+(pb>>1)):0;
   if(dE>2&&Math.random()<.06){const e=eUnit(near?near.fac:'legion',true,Math.max(2,t));e.lone=true;return[e]}
-  let n=near?ri(3,5)+(t>3?1:0):(dE<=2?ri(2,3):ri(3,5));if(near&&(near.fac==='iron'||near.fac==='bio'))n--;
+  const early=S.exp<20;let n=near?ri(3,5)+(t>3?1:0):(dE<=2?(early?ri(1,2):ri(2,3)):(early?ri(2,3):ri(3,5)));if(near&&(near.fac==='iron'||near.fac==='bio'))n--;
   if(pb>=2)n=Math.min(8,n+1);
   const out=[];
   for(let i=0;i<n;i++)out.push(near&&near.fac!=='pirate'&&Math.random()<.5?eUnit(near.fac,false,t):eUnit('pirate',false,(dE<=2?0:Math.max(1,t))+pb));
-  if(S.month>1||dE>2)for(const e of out)if(Math.random()<.1)elite(e);
+  if(!early&&(S.month>1||dE>2))for(const e of out)if(Math.random()<.1)elite(e);
   return out}
 function planetFleet(p){const[b,s]=FA[p.fac].mix,out=[],hq=p.role==='hq';
   for(let i=0;i<b;i++){const e=eUnit(p.fac,true,p.tier);if(hq){e.max+=40;e.hp+=40;e.base+=40}out.push(e)}
@@ -1031,7 +1044,7 @@ function fxOn(k,s,col){B.fx.push({k,s,col,t0:now()})}
 function link(s,list,col){const a=ctr(s);for(const f of list)if(f!==s)B.fx.push({k:'link',a,b:ctr(f),col,t0:now()})}
 /* charge an orb at the caster, then scatter it at every target; resolves when the shots land */
 async function orbCast(s,list,col){const c=ctr(s),side=B.A.includes(s)?1:-1;
-  B.fx.push({k:'orb',x:c.x+side*58,y:c.y,tg:list.map(ctr),col,t0:now()});
+  B.fx.push({k:'orb',x:c.x+side*58,y:c.y,tg:list.map(ctr),col,arc:s.t==='gu',t0:now()});
   if(snd&&audio())try{tone(180,ac.currentTime,AD(500)/1000,'sawtooth',.05,sfxG,900)}catch(e){}
   await sleep(AD(800));beep(420,.12,'square',.04)}
 function boom(s){const c=ctr(s);boomAt(c.x,c.y)}
@@ -1056,7 +1069,7 @@ function shot(s,tg,mult,pierce){
   beam(s,tg,s.w);
   const miss=(s.w===0?0:.1)+tr(tg,'ev')+(MAG.includes(tg.sh)?.08:0)+(s.blind?.45:0)-(!isE(s)&&S.tech.t0?.08:0);
   if(Math.random()<miss){fl(tg,'빗나감','#aab');return false}
-  let d=wd(s)*rnd(.8,1.2)*mult*(isE(s)?1.15:1);
+  let d=wd(s)*rnd(.8,1.2)*mult*(isE(s)?1.035:1);
   if(!isE(s)&&S.tech.t1&&Math.random()<.1){d*=1.5;fl(s,'치명타','#ffcc55')}
   hit(tg,d,pierce,s);return true}
 async function fire(s,tg,lf,d){
@@ -1067,7 +1080,7 @@ async function fire(s,tg,lf,d){
     case 5:for(let i=0;i<3&&tg.hp>0&&s.hp>0;i++){shot(s,tg,.4);if(i<2)await bs(d*.35)}break;
     case 6:if(shot(s,tg,1)&&tg.hp>0&&Math.random()<.35)afflict(tg,'burn',3,'화상','#ff9955');break;
     case 7:{shot(s,tg,1,Math.random()<.25);const o=lf.filter(x=>x!==tg&&x.hp>0);
-      if(o.length&&s.hp>0){const t2=pick(o);beam(s,t2,7);hit(t2,wd(s)*.35*(isE(s)?1.15:1),false,s)}break}
+      if(o.length&&s.hp>0){const t2=pick(o);beam(s,t2,7);hit(t2,wd(s)*.35*(isE(s)?1.035:1),false,s)}break}
     default:shot(s,tg,1)}
   if(s.blind)s.blind--;
 }
@@ -1077,7 +1090,7 @@ async function act(s,foes,friends,focus,d){
   if(s.burn){s.burn--;s.hp=Math.max(0,s.hp-6);s.hitAt=now();fl(s,'-6','#ff9955');if(s.hp<=0){kill(s);await bs(d*.6);return}}
   if(s.stun){s.stun--;fl(s,'기절','#ffee55');await bs(d*.6);return}
   const tn=lf.filter(x=>x.taunt>0),tg=(focus&&focus.hp>0)?focus:pick(tn.length?tn:lf);
-  if(s.hp<=Math.max(10,(s.sd||0)*s.max)){say(`${s.n}, 자폭 돌격!`);const c=ctr(tg),dur=AD(700);s.ram={tx:c.x,ty:c.y,t0:now(),dur};
+  if(isE(s)&&s.hp<=Math.max(10,(s.sd||0)*s.max)){say(`${s.n}, 자폭 돌격!`);const c=ctr(tg),dur=AD(700);s.ram={tx:c.x,ty:c.y,t0:now(),dur};
     if(snd&&audio())try{tone(160,ac.currentTime,dur/1000,'sawtooth',.05,sfxG,700)}catch(e){}
     await sleep(dur);const v=s.sd?20+wd(s)*.5:40+wd(s);s.ram=null;s.hp=0;s.dieAt=0;boomAt(c.x,c.y);hit(tg,v);await bs(d*1.2);return}
   const sk=s.sk||(SK[s.t]?s.t:null),ch=isE(s)?(S.tech.t3?.125:.25):(S.tech.h4?.3:.2);
@@ -1185,7 +1198,6 @@ async function battle(E,o){
     const cheer=PL.filter(p=>p.role!=='earth'&&owned(p)&&!p.col.rebel&&cheb(S.x,S.y,p)<=2);
     if(cheer.length){for(const p of cheer)p.col.loy=Math.min(100,p.col.loy+1);txt+=`\n${cheer.map(p=>p.n).join(', ')} 충성도 +1 (근처에서 승전)`}
     if(S.tech.e1){for(const s of S.fleet)s.hp=Math.min(s.max,s.hp+Math.round(s.max*.1));txt+='\n응급 수리 기술이 내구도를 10% 되살렸습니다.'}
-    const hurt=S.fleet.filter(s=>s.hp<=10).length;if(hurt)txt+=`\n\n내구도 10 이하 전함 ${hurt}척은 다음 전투에서 자폭합니다. 조선소에서 수리하십시오.`;
     if(S.loy<60){const before=S.fleet.length;S.fleet=S.fleet.filter(s=>BRO.includes(s.t)||Math.random()>=(60-S.loy)/150);
       const gone=before-S.fleet.length;if(gone)txt+=`\n충성도가 낮아 ${gone}척이 함대를 떠났습니다. 월급을 지급하십시오.`}
     ui();await msgBox('승리',txt);
@@ -1203,11 +1215,12 @@ function drawShip(s,i,flip,t){const p=B.pos.get(s);if(!p)return;
     const hitNow=s.hitAt&&t-s.hitAt<AD(150);if(hitNow)x+=(Math.floor(t/30)%2)?3:-3;
     const im=sprite(s.t,s.tint);
     g.save();if(flip){g.translate(x+135,y-3);g.scale(-1,1)}else g.translate(x-3,y-3);
-    if(im.flame){const f=5+((Math.floor(t/70)+i)%3)*4;g.fillStyle=im.flame;g.fillRect(4-f,25,f,6);g.fillStyle='#fff';g.fillRect(4-Math.floor(f/2),27,Math.floor(f/2),3)}
+    if(im.flame){const f=5+((Math.floor(t/70)+i)%3)*4,rx=im.rear*3;g.fillStyle=im.flame;g.fillRect(rx-f,25,f,6);g.fillStyle='#fff';g.fillRect(rx-Math.floor(f/2),27,Math.floor(f/2),3)}
     g.drawImage(im,0,0,138,54);
     if(hitNow){g.globalCompositeOperation='lighter';g.globalAlpha=.8;g.drawImage(im,0,0,138,54)}
     g.restore();
-    if(s.elite){const ex=x+(flip?118:14),ey=y-8+Math.round(Math.sin(t/300)*1.5);g.fillStyle='#ffc857';g.fillRect(ex-6,ey+3,13,4);g.fillRect(ex-6,ey-1,3,4);g.fillRect(ex-1,ey-3,3,6);g.fillRect(ex+4,ey-1,3,4);
+    if(s.elite){const ex=x+(flip?118:14),ey=y-8+Math.round(Math.sin(t/300)*1.5);g.fillStyle='#000';g.fillRect(ex-6,ey-7,13,13);g.fillStyle='#f2f2f2';g.fillRect(ex-5,ey-5,11,7);g.fillRect(ex-4,ey-6,9,1);g.fillRect(ex-3,ey+2,7,3);
+      g.fillStyle='#000';g.fillRect(ex-3,ey-3,2,3);g.fillRect(ex+2,ey-3,2,3);g.fillRect(ex,ey,1,1);g.fillRect(ex-1,ey+3,1,2);g.fillRect(ex+1,ey+3,1,2);
       g.strokeStyle='#ffc857';g.lineWidth=1;g.globalAlpha=.35+.25*Math.sin(t/250);g.beginPath();g.ellipse(x+66,y+24,70,27,0,0,6.2832);g.stroke();g.globalAlpha=1}
     if(s.thin||s.wall>0||(s.flash&&t<s.flash)){g.strokeStyle=(s.flash&&t<s.flash)?'#fff':s.thin?'#7df':'#fd6';g.lineWidth=2;g.setLineDash([6,4]);g.lineDashOffset=-t/40;
       g.beginPath();g.ellipse(x+66,y+24,72,29,0,0,6.2832);g.stroke();g.setLineDash([])}}
@@ -1215,6 +1228,7 @@ function drawShip(s,i,flip,t){const p=B.pos.get(s);if(!p)return;
     g.drawImage(iconCv('w',s.w),p.x,by-4,14,14);g.drawImage(iconCv('s',s.sh),p.x+16,by-4,14,14);
     g.fillStyle='#000';g.fillRect(p.x+34,by,66,7);g.fillStyle=hpCol(r);g.fillRect(p.x+35,by+1,Math.max(1,Math.round(64*r)),5);
     g.font='17px "Do Hyeon",sans-serif';g.textAlign='left';txt(s.hp,p.x+104,by+8,'#ffc857');
+    g.font='11px "Do Hyeon",sans-serif';txt(s.n,p.x+34,by+19,s.elite?'#ffc857':flip?'#e0b8b0':'#bfeee0');
     let sx=p.x+35;for(const[k,,c]of STAT)if(s[k]>0){g.fillStyle='#000';g.fillRect(sx-1,by-7,7,6);g.fillStyle=c;g.fillRect(sx,by-6,5,4);sx+=8}
     if(flip&&B.selecting){g.fillStyle='#ffc857';g.fillRect(p.x-4,p.y-4,18,18);g.fillStyle='#000';g.textAlign='center';g.fillText(i+1,p.x+5,p.y+10)}}
 }
@@ -1257,7 +1271,7 @@ function drawBattle(t){
         g.globalAlpha=.28;g.beginPath();g.arc(f.x,f.y,r*1.9,0,6.2832);g.fill();g.globalAlpha=1;g.beginPath();g.arc(f.x,f.y,r,0,6.2832);g.fill();
         g.fillStyle='#fff';g.beginPath();g.arc(f.x,f.y,r*.5,0,6.2832);g.fill()}
       else{const k=Math.min(1,(a-500)/300),e=k*k;
-        for(const q of f.tg){for(let n=0;n<4;n++){const ee=Math.pow(Math.max(0,k-n*.07),2),bx=f.x+(q.x-f.x)*ee,by=f.y+(q.y-f.y)*ee-Math.sin(ee*Math.PI)*18,r=7-n*1.5;
+        for(const q of f.tg){for(let n=0;n<4;n++){const ee=Math.pow(Math.max(0,k-n*.07),2),bx=f.x+(q.x-f.x)*ee,by=f.y+(q.y-f.y)*ee-(f.arc?Math.sin(ee*Math.PI)*18:0),r=7-n*1.5;
             g.globalAlpha=1-n*.22;g.fillStyle=n?f.col:'#fff';g.beginPath();g.arc(bx,by,r,0,6.2832);g.fill();if(!n){g.fillStyle=f.col;g.globalAlpha=.35;g.beginPath();g.arc(bx,by,12,0,6.2832);g.fill()}}}
         g.globalAlpha=1}}
     else if(f.k==='heal'){const c=ctr(f.s),k=a/700;g.strokeStyle='#77ff77';g.lineWidth=3;g.globalAlpha=(1-k)*.8;g.beginPath();g.ellipse(c.x,c.y,58+k*20,22+k*10,0,0,6.2832);g.stroke();
@@ -1289,7 +1303,7 @@ function cineNext(){if(!C)return;C.i++;C.t0=now();if(C.i>=C.scenes.length){const
 function cine(scenes){return new Promise(res=>{setMode('cine');C={scenes,i:0,t0:now(),done:res};
   keyFn=k=>{if(k==='Escape'){C.i=C.scenes.length;cineNext()}else if(k==='Enter'||k===' ')cineNext();return true}})}
 function spr(type,x,y,sc,flip,t,tint){const im=sprite(type,tint),w=46*sc,h=18*sc;g.save();g.translate(Math.round(x),Math.round(y));if(flip)g.scale(-1,1);
-  if(im.flame){const f=(2+(Math.floor(t/70)%3))*sc;g.fillStyle=im.flame;g.fillRect(-w/2+1.3*sc-f,-1.2*sc,f,2.4*sc)}
+  if(im.flame){const f=(2+(Math.floor(t/70)%3))*sc;g.fillStyle=im.flame;g.fillRect(-w/2+im.rear*sc-f,-1.2*sc,f,2.4*sc)}
   g.drawImage(im,-w/2,-h/2,w,h);g.restore()}
 function drawCine(t){const H=cv.height,sc=C.scenes[C.i],a=now()-C.t0;if(a>sc.dur){cineNext();return}
   const k=a/sc.dur;g.fillStyle='#04030a';g.fillRect(0,0,640,400);
@@ -1366,6 +1380,7 @@ function frame(t){if(C)drawCine(t);else if(mode==='battle'&&B)drawBattle(t);else
 function setSpd(v){spd=v;$('bSpd').textContent=spd+'배속';saveSet()}
 document.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey)return;const k=e.key;
+  if(typing){if(!e.isComposing&&(k==='Enter'||k==='Escape')&&keyFn){keyFn(k);e.preventDefault()}return}
   if(keyFn){if(k.length===1||/^Key[A-Z]$/.test(e.code)||['Enter','Escape','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(k)){sfx.click();keyFn(k,e.code);e.preventDefault()}return}
   if(mode!=='map'||busy)return;
   const mv={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[k]||{KeyW:[0,-1],KeyS:[0,1],KeyA:[-1,0],KeyD:[1,0]}[e.code];
@@ -1411,7 +1426,7 @@ function sanitize(o){
   const ids=pl.map(p=>p.id),conq=flags(o.conq,k=>ids.includes(k)&&k!=='p0');
   for(const p of pl.slice(1)){if(conq[p.id]&&!p.col)p.col={loy:45,tax:1,fac:[],rebel:false};if(!conq[p.id])delete p.col}
   const ships=(a,n)=>(Array.isArray(a)?a:[]).slice(0,n).filter(s=>s&&TY[s.t]).map(s=>{const max=num(s.max,1,999,TY[s.t].hp);
-    const r={t:s.t,n:TY[s.t].n,max,hp:num(s.hp,1,max,max),w:num(s.w,-1,7,-1),sh:num(s.sh,-1,7,-1)};
+    const r={t:s.t,n:cleanName(s.n)||TY[s.t].n,max,hp:num(s.hp,1,max,max),w:num(s.w,-1,7,-1),sh:num(s.sh,-1,7,-1)};
     if(typeof s.tint==='string'&&/^#[0-9a-f]{3,6}$/i.test(s.tint))r.tint=s.tint;return r});
   const fleet=ships(o.fleet,8),hangar=ships(o.hangar,11);
   const raids=(Array.isArray(o.raids)?o.raids:[]).slice(0,4).filter(r=>r&&FA[r.fac]).map(r=>({x:num(r.x,0,COLS-1,0),y:num(r.y,0,ROWS-1,0),fac:r.fac,tier:num(r.tier,1,6,1),tg:r.tg==='planet'?'planet':'fleet',pid:typeof r.pid==='string'&&/^p\d{1,2}$/.test(r.pid)?r.pid:'p0',n:num(r.n,0,1e9,0)}));
