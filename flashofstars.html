@@ -96,10 +96,11 @@ kbd{font:inherit;color:var(--yellow);border:1px solid currentColor;padding:0 .28
 .win .foot{display:flex;justify-content:space-between;align-items:center;gap:1em;padding:.25em .8em;background:var(--olive-lo)}
 .win .foot .note{color:var(--cream);min-width:0}
 .win .foot button{white-space:nowrap;color:var(--yellow);display:flex;gap:.4em;align-items:center}
-.tree{position:relative;flex:1;min-height:0;margin:calc(4*var(--u)) calc(6*var(--u))}
+.tree{flex:1;min-height:0;margin:calc(4*var(--u)) calc(6*var(--u));overflow-y:auto;overflow-x:hidden}
+.tw{position:relative;height:24.5em}
 .tree svg{position:absolute;inset:0;width:100%;height:100%}
-.tn{position:absolute;width:18.8%;height:11.2%;box-sizing:border-box;background:var(--olive-lo);border:1px solid var(--olive-hi);
-  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:0;padding:0 .3em;text-align:left;line-height:1.08;overflow:hidden;font-size:.76em}
+.tn{position:absolute;width:18.8%;height:10.2%;box-sizing:border-box;background:var(--olive-lo);border:1px solid var(--olive-hi);
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:0;padding:0 .3em;text-align:left;line-height:1.12;overflow:hidden;font-size:.82em}
 .tn b{font-weight:400;white-space:nowrap;display:flex;align-items:center;gap:.25em;color:var(--cream)}
 .tn b kbd{font-size:.8em}
 .tn small{font-size:.74em;color:var(--olive-ink)}
@@ -111,6 +112,7 @@ kbd{font:inherit;color:var(--yellow);border:1px solid currentColor;padding:0 .28
 .tn img.ic{margin-right:0}
 .win .foot .fb{display:flex;gap:1.2em;flex:none}
 .win .foot .note{font-size:.86em;line-height:1.25}
+.win .foot .note.fix{height:3.75em;overflow:hidden;flex:1}
 .compact .tn{font-size:9px;padding:0 2px}
 .compact .tn b{white-space:normal}
 .compact .tn kbd,.compact .tn img.ic{display:none}
@@ -167,7 +169,7 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
 <main class="wrap">
   <header class="top">
     <h1>별빛 섬광</h1>
-    <p id="ver">v0.23</p>
+    <p id="ver">v0.24</p>
   </header>
 
   <div class="stage" id="stage">
@@ -243,7 +245,7 @@ const SK={sung:'집중 포격',gu:'전탄 발사',ok:'긴급 수리',heon:'보�
 const TRD={scout:'회피',mirage:'회피',spore:'매 턴 재생'};
 const tr=(s,k)=>s[k]||(TY[s.t]&&TY[s.t][k])||0;
 const SHIPTECH={cruiser:'h0',sphere:'h0',tide:'h0',cyl:'h1',frost:'h1',bird:'h1',mirage:'h1',boulder:'h1',spore:'h1',storm:'h1',green:'h2',steel:'h2',glacier:'h2',ember:'h2',bastion:'h2',titan:'h3'};
-const SKD={sung:'강한 적 1기 큰 피해·기절',gu:'적 전체 큰 피해',ok:'아군 전체 회복·상태 해제',heon:'아군 전체 1회 방어',
+const SKD={sung:'힘을 모아 강한 적 1기에 1.5배 피해 · 보호막 10% 무시',gu:'적 전체 큰 피해',ok:'아군 전체 회복·상태 해제',heon:'아군 전체 1회 방어',
   cruiser:'적 전체 피해·20% 기절',cyl:'아군 전체 회복',sphere:'아군 전체 흡수막',bird:'적 전체 관통 피해 ×2·화상',green:'강한 적 2기 내구도 절반',frost:'적 전체 실명',
   steel:'적 전체 피해 ×2',titan:'적 전체 큰 피해',raider:'적 1기 큰 피해·자금 약탈',tide:'가장 약한 아군 크게 회복',storm:'적 전체 관통 피해·30% 기절',
   glacier:'아군 전체 1회 방어·상태 해제',ember:'적 전체 피해·화상',bastion:'아군 전체 큰 흡수막',scout:'강한 적에게 표적(받는 피해 +50%)',
@@ -275,7 +277,10 @@ const FAC={
   arsenal:{n:'무기 공장',cost:500,d:'무기·보호막 구입',uniq:1},
   lab:{n:'연구소',cost:600,d:'연구 진행 +4%/월 · 기술 개발 가능'},
   admin:{n:'행정청',cost:250,d:'충성도 +3/월',uniq:1},
-  fort:{n:'방어 기지',cost:400,d:'반란 확률 절반 · 충성도 +1/월',uniq:1},
+  fort:{n:'방어 기지',cost:400,d:'방어도 +20 · 반란 확률 절반 · 충성도 +1/월',uniq:1},
+  turret:{n:'궤도 포대',cost:350,d:'방어도 +15',tech:'d0'},
+  shieldgen:{n:'행성 방어막',cost:600,d:'방어도 +25 · 습격에도 시설이 부서지지 않음',uniq:1,tech:'d1'},
+  radar:{n:'조기 경보망',cost:300,d:'습격으로 잃는 충성도 절반',uniq:1},
   theater:{n:'문화관',cost:300,d:'충성도 +2/월'},
   bank:{n:'은행',cost:700,d:'이 행성 수입 +30%',uniq:1},
   academy:{n:'사관학교',cost:600,d:'경험 +3/월',uniq:1}
@@ -305,7 +310,9 @@ const TECH=[];
     .forEach((a,i)=>TECH.push({id:a[0],n:a[1],x:i,y:6,req:i?['h'+(i-1)]:[],cost:a[2],exp:a[3],d:a[4]}));
   [['e4','자가 수복',1200,110,'전투 중 모든 아군이 매 턴 내구도 3 회복',4,4,'e3'],['c4','자치 헌장',900,100,'충성도 기본 하락 완화 · 반란 확률 -30%',4,5,'c3'],['h4','지휘 체계',1400,130,'아군 스킬 발동 확률 20% → 30%',4,6,'h3'],
    ['t0','조준 보정',300,20,'아군 명중률 +8%',0,7],['t1','집중 사격',500,45,'아군 공격이 10% 확률로 치명타(×1.5)',1,7,'t0'],['t2','방어 교범',700,70,'아군이 받는 피해 -10%',2,7,'t1'],
-   ['t3','전자전',900,95,'적의 스킬 발동 확률 절반',3,7,'t2'],['t4','기습 전술',1100,120,'전투 시작 시 적 전체에 선제 포격 10',4,7,'t3']]
+   ['t3','전자전',900,95,'적의 스킬 발동 확률 절반',3,7,'t2'],['t4','기습 전술',1100,120,'전투 시작 시 적 전체에 선제 포격 10',4,7,'t3'],
+   ['d0','궤도 방어',300,25,'궤도 포대 건설 가능',0,8],['d1','방어막 공학',600,55,'행성 방어막 건설 가능',1,8,'d0'],['d2','요새화',800,80,'모든 방어 시설의 방어도 +50%',2,8,'d1'],
+   ['d3','민병대',500,60,'습격을 격퇴한 행성의 충성도 +3',3,8,'d2'],['d4','행성 요새',1000,110,'모든 식민지의 기본 방어도 +20',4,8,'d3']]
     .forEach(a=>TECH.push({id:a[0],n:a[1],x:a[5],y:a[6],req:a[7]?[a[7]]:[],cost:a[2],exp:a[3],d:a[4]}));})();
 TECH.forEach(t=>t.cost=Math.round(t.cost*2.25/10)*10);
 const TB=Object.fromEntries(TECH.map(t=>[t.id,t]));
@@ -347,8 +354,8 @@ function genWorld(){
 }
 function newState(){const w=genWorld();return{v:2,x:w.pl[0].x,y:w.pl[0].y,money:300,exp:0,loy:80,moves:0,month:1,fights:0,
   tech:{w0:true},prog:{},rsch:null,
-  fleet:[ship('sung',-1,-1,1),ship('fighter',-1,-1,1),ship('fighter',-1,-1,1)],hangar:[],pl:w.pl,tiles:w.tiles,worm:w.worm,conq:{},info:{},guard:{},joined:{},lover:false}}
-function setState(st){S=st;PL=S.pl;for(const p of PL)p.c=PT[p.type].c[p.seed%PT[p.type].c.length];for(const k in pcache)delete pcache[k];V.x=S.x;V.y=S.y;trail=[];prev={}}
+  fleet:[ship('sung',-1,-1,1),ship('fighter',-1,-1,1),ship('fighter',-1,-1,1)],hangar:[],raids:[],pl:w.pl,tiles:w.tiles,worm:w.worm,conq:{},info:{},guard:{},joined:{},lover:false}}
+function setState(st){S=st;PL=S.pl;S.raids=S.raids||[];for(const p of PL)p.c=PT[p.type].c[p.seed%PT[p.type].c.length];for(const k in pcache)delete pcache[k];V.x=S.x;V.y=S.y;trail=[];prev={}}
 const KEY='sevenstars-v2',SETKEY='sevenstars-set';
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{return sanitize(JSON.parse(localStorage.getItem(KEY)))}catch(e){}return null}
@@ -377,7 +384,7 @@ function zone(){const p=here();
   return dE<=2?'지구 근처':'먼 우주'}
 /* colony maths */
 const cnt=(p,k)=>p.col.fac.filter(f=>f===k).length;
-const slots=p=>3+p.size+(S.tech.c3?1:0);
+const slots=p=>4+p.size+(S.tech.c3?1:0);
 function inc(p){const c=p.col,T=PT[p.type];if(c.rebel)return 0;
   let v=(p.role==='earth'?30:15+8*p.size)+37.5*cnt(p,'mine')*(T.mine||1)*(S.tech.c0?1.25:1)+20*cnt(p,'trade')*(T.trade||1)*(S.tech.c1?1.25:1);
   v*=[.5,1,1.6][c.tax];if(c.fac.includes('bank'))v*=1.3;
@@ -386,8 +393,9 @@ function inc(p){const c=p.col,T=PT[p.type];if(c.rebel)return 0;
 const nCol=()=>PL.filter(p=>p.role!=='earth'&&owned(p)).length;
 function dl(p){if(p.role==='earth')return 0;const c=p.col;
   return-(S.tech.c4?2:3)+[2,0,-5][c.tax]+cnt(p,'trade')+3*cnt(p,'admin')+cnt(p,'fort')+2*cnt(p,'theater')+(PT[p.type].loy||0)+(S.tech.c2?1:0)
-    -Math.floor((nCol()-1)/3)+(S.x===p.x&&S.y===p.y?2:0)-(c.martial?1:0)}
-const bcost=(p,k)=>Math.round(FAC[k].cost*1.25*(PT[p.type].build||1)*(S.tech.c3?.8:1));
+    -Math.floor((nCol()-1)/3)-(c.martial?1:0)}
+const defense=p=>Math.round((5+5*p.size)+(20*cnt(p,'fort')+15*cnt(p,'turret')+25*cnt(p,'shieldgen'))*(S.tech.d2?1.5:1)+(S.tech.d4?20:0));
+const bcost=(p,k)=>Math.round(FAC[k].cost*1.125*(PT[p.type].build||1)*(S.tech.c3?.8:1));
 const totalInc=()=>PL.filter(owned).reduce((a,p)=>a+inc(p),0);
 const sign=v=>(v>=0?'+':'')+v;
 
@@ -620,9 +628,19 @@ function drawMap(t){
   for(const p of PL){const[cx,cy]=cxy(p.x,p.y),n=p.type==='asteroid'?8:[8,10,12][p.size],sz=n*2,mine=owned(p);
     g.drawImage(planetCv(p,n),cx-sz/2,cy-sz/2,sz,sz);
     if(p.ring){g.strokeStyle=shade(p.c,1.3);g.globalAlpha=.85;g.beginPath();g.ellipse(cx,cy,sz*.8,sz*.22,-.35,0,6.2832);g.stroke();g.globalAlpha=1}
-    const hw=g.measureText(p.n).width/2+2;txt(p.n,clamp(cx,hw,420-hw),p.y===ROWS-1?cy-sz/2-4:cy+sz/2+10,mine?(p.col.rebel?'#ff8a7a':'#bfeee0'):shade(FA[p.fac].c,1.15));
+    const hw=g.measureText(p.n).width/2+2,up=p.y===ROWS-1,ly=up?cy-sz/2-4:cy+sz/2+10,lx=clamp(cx,hw,420-hw);txt(p.n,lx,ly,mine?(p.col.rebel?'#ff8a7a':'#bfeee0'):shade(FA[p.fac].c,1.15));
+    if(mine&&p.role!=='earth'){const c=p.col,by=up?ly-15:ly+3,bx=clamp(lx-13,2,392),d=dl(p);
+      g.fillStyle='#000';g.fillRect(bx-1,by-1,24,5);g.fillStyle=c.rebel?(Math.floor(t/300)%2?'#ff4d3b':'#801008'):c.loy<50?'#ff8a3b':c.loy<70?'#ffd23b':'#5fd35f';g.fillRect(bx,by,Math.max(1,Math.round(22*c.loy/100)),3);
+      if(!c.rebel&&d){g.fillStyle=d>0?'#5fd35f':'#ff4d3b';const ax=bx+26,s=d>0?-1:1;g.fillRect(ax,by+1+s,5,1);g.fillRect(ax+1,by+1,3,1);g.fillRect(ax+2,by+1-s,1,1)}
+      if(c.martial){g.fillStyle='#fff';g.fillRect(bx-6,by-1,3,5);g.fillStyle='#000';g.fillRect(bx-5,by,1,3)}
+      if(c.ev&&c.ev.m===S.month){g.fillStyle=Math.floor(t/400)%2?'#ff8a3b':'#ffc857';g.fillRect(cx-sz/2-5,cy+sz/2-4,4,4)}}
     if(p.role!=='earth'&&mine){g.fillStyle='#e8e8f0';g.fillRect(cx+8,cy-16,1,9);g.fillStyle=p.col.rebel?(Math.floor(t/300)%2?'#ff4d3b':'#801008'):'#7fe3c4';g.fillRect(cx+9,cy-16,6,4)}
     if(hasNews(p)&&Math.floor(t/350)%2){g.font='16px "Do Hyeon",sans-serif';txt('!',cx-13,cy-6,'#ffc857');g.font='11px "Do Hyeon",sans-serif'}}
+  for(const r of S.raids){const[rx,ry]=cxy(r.x,r.y),tp=r.tg==='planet'?PL.find(p=>p.id===r.pid):null,T=tp||{x:S.x,y:S.y},[tx,ty]=cxy(T.x,T.y);
+    g.strokeStyle='#ff4d3b';g.globalAlpha=.35;g.setLineDash([2,4]);g.lineDashOffset=-t/60;g.beginPath();g.moveTo(rx,ry);g.lineTo(tx,ty);g.stroke();g.setLineDash([]);
+    g.globalAlpha=.5+.4*Math.sin(t/200);g.beginPath();g.arc(rx,ry,11,0,6.2832);g.stroke();g.globalAlpha=1;
+    g.save();g.translate(rx,ry);if(T.x<r.x)g.scale(-1,1);g.drawImage(sprite(`e:${r.fac}:s`),-12,-5,24,10);g.restore();
+    g.font='14px "Do Hyeon",sans-serif';if(Math.floor(t/300)%2)txt('!',rx,ry-9,'#ff4d3b');g.font='11px "Do Hyeon",sans-serif'}
   if(Math.abs(S.x-V.x)+Math.abs(S.y-V.y)>2.5){V.x=S.x;V.y=S.y}
   V.x+=(S.x-V.x)*.28;V.y+=(S.y-V.y)*.28;
   const moving=Math.abs(S.x-V.x)+Math.abs(S.y-V.y)>.03;
@@ -636,6 +654,22 @@ function drawMap(t){
   g.drawImage(im,-12,-5,24,10);g.restore();
   const bob=Math.round(Math.sin(t/250)*1.5),mx=Math.round(cx),my=Math.round(cy);g.fillStyle='#ffc857';
   g.fillRect(mx-3,my-13+bob,7,2);g.fillRect(mx-2,my-11+bob,5,1);g.fillRect(mx-1,my-10+bob,3,1);g.fillRect(mx,my-9+bob,1,1);
+  if(hover&&mode==='map'&&dlg.hidden&&hover.x<420&&hover.y<310){
+    const hp=PL.find(p=>{const[px,py]=cxy(p.x,p.y);return Math.abs(hover.x-px)<=13&&Math.abs(hover.y-py)<=13}),hr=S.raids.find(r=>{const[px,py]=cxy(r.x,r.y);return Math.abs(hover.x-px)<=12&&Math.abs(hover.y-py)<=12});
+    let L=null;
+    if(hr){const tp=PL.find(p=>p.id===hr.pid);L=[[`${FA[hr.fac].n} 습격대`,'#ff8a7a'],[hr.tg==='fleet'?'우리 함대를 쫓는 중':`${tp?tp.n:'행성'}을(를) 노리는 중`,'#f5eee2'],['위험도 '+'★'.repeat(hr.tier),'#ffc857']]}
+    else if(hp){const p=hp;
+      if(!owned(p))L=[[p.n,shade(FA[p.fac].c,1.15)],[`${FA[p.fac].n} · ${PT[p.type].n} ${SZ[p.size]}`,'#f5eee2'],['위험도 '+'★'.repeat(p.tier),'#ffc857']].concat(FA[p.fac].d?[[FA[p.fac].d,'#d8cbb8']]:[]);
+      else{const c=p.col,earth=p.role==='earth',d=dl(p);
+        L=[[p.n,'#bfeee0'],[`${PT[p.type].n} ${SZ[p.size]}`+(earth?' · 본성':` · 방어도 ${defense(p)}`),'#f5eee2']];
+        if(!earth)L.push(c.rebel?['반란 중 · 함대로 진압해야 합니다','#ff8a7a']:[`충성도 ${c.loy}% (${sign(d)}/월)`+(c.martial?' · 계엄령':c.loy<50?' · 반란 위험':''),c.loy<50?'#ff8a3b':'#f5eee2']);
+        L.push([`수입 +${inc(p)}/월`+(earth?'':` · 세율 ${TAX[c.tax]}`),'#ffc857'],[`시설 ${c.fac.length}/${slots(p)}`+(c.fac.length?': '+[...new Set(c.fac)].map(f=>FAC[f].n+(cnt(p,f)>1?'×'+cnt(p,f):'')).join(', '):''),'#d8cbb8']);
+        if(c.ev&&c.ev.m===S.month)L.push(['이번 달: '+c.ev.t,'#ff8a3b']);
+        if(S.raids.some(r=>r.tg==='planet'&&r.pid===p.id))L.push(['습격대가 접근하고 있습니다','#ff8a7a'])}}
+    if(L){g.font='12px "Do Hyeon",sans-serif';g.textAlign='left';const w=Math.min(300,Math.max(...L.map(z=>g.measureText(z[0]).width))+14),h=L.length*15+8;
+      const bx=clamp(hover.x+12,2,418-w),by=clamp(hover.y+12,2,308-h);
+      g.fillStyle='rgba(14,10,8,.94)';g.fillRect(bx,by,w,h);g.strokeStyle='#8a6f4e';g.lineWidth=1;g.strokeRect(bx+.5,by+.5,w-1,h-1);
+      g.save();g.beginPath();g.rect(bx,by,w-4,h);g.clip();L.forEach((z,i)=>{g.fillStyle=z[1];g.fillText(z[0],bx+7,by+16+i*15)});g.restore()}}
   g.restore();
 }
 let prev={};
@@ -651,7 +685,7 @@ function ui(){
     <div class="bar"><dt>${r?'연구 '+r.n:'연구 없음'}</dt><dd${ch('pr')}>${r?pr+'%':'-'}</dd><i style="--v:${pr}%"></i></div>
     <div class="bar${S.loy<60?' warn':''}"><dt>충성도</dt><dd${ch('loy')}>${S.loy}%</dd><i style="--v:${S.loy}%"></i></div></dl>
     <div class="hp" title="함대 내구도">${S.fleet.map(s=>`<span class="${BRO.includes(s.t)?'bro':''}" style="--v:${Math.round(s.hp/s.max*100)}%;--c:${hpCol(s.hp/s.max)}"></span>`).join('')}</div>
-    <p class="loc">${p?p.n:'우주 공간'}<small>${zone()}</small><small>${S.month}월(전투 ${(S.fights||0)%4}/4) · 영토 ${PL.filter(owned).length} · 수입 +${totalInc()}</small></p>`;
+    <p class="loc">${p?p.n:'우주 공간'}<small>${zone()}</small><small>${S.month}월(전투 ${(S.fights||0)%4}/4) · 영토 ${PL.filter(owned).length} · +${totalInc()}/월</small></p>`;
   prev=vals;
   const c=cmds();let h='';
   for(let i=1;i<=10;i++){const o=c[i];
@@ -711,11 +745,14 @@ function techBox(){return new Promise(res=>{
     let lines='';for(const t of TECH)for(const r of t.req){const a=TB[r],on=S.tech[r];
       lines+=`<line x1="${a.x*100+96}" y1="${a.y*100+50}" x2="${t.x*100+4}" y2="${t.y*100+50}" stroke="${on?'#ffc857':'#15100c'}" stroke-width="2" vector-effect="non-scaling-stroke"/>`}
     const nodes=TECH.map((t,i)=>{const st=tstate(t),pr=S.prog[t.id]||0;
-      return`<button class="tn ${st}${t.id===sel?' sel':''}" data-t="${t.id}" style="left:${t.x*20+.6}%;top:${t.y/8*100+.6}%"><b><kbd>${i<26?String.fromCharCode(65+i):i<35?i-25:'·'}</kbd>${t.ic?icon(t.ic[0],t.ic[1]):''}${t.n}</b>`+
+      return`<button class="tn ${st}${t.id===sel?' sel':''}" data-t="${t.id}" style="left:${t.x*20+.6}%;top:${t.y/9*100+.5}%"><b><kbd>${i<26?String.fromCharCode(65+i):i<35?i-25:'·'}</kbd>${t.ic?icon(t.ic[0],t.ic[1]):''}${t.n}</b>`+
         `<small>${st==='done'?'개발 완료':pr?`연구 ${pr}%`:`${t.cost}만 · 경험 ${t.exp}`}</small>${st!=='done'&&pr?`<i style="--v:${pr}%"></i>`:''}</button>`}).join('');
-    openDlg(`<div class="win full"><h2>과학 기술</h2><div class="tree"><svg viewBox="0 0 500 800" preserveAspectRatio="none">${lines}</svg>${nodes}</div>`+
-      `<div class="foot"><span class="note">${t0.n} · ${t0.d}${st0==='lock'?' · 선행 기술 필요':''}<br>자금 ${S.money}만원 · 경험 ${S.exp}</span>`+
+    const old=dlg.querySelector('.tree'),sc=old?old.scrollTop:-1;
+    openDlg(`<div class="win full"><h2>과학 기술</h2><div class="tree"><div class="tw"><svg viewBox="0 0 500 900" preserveAspectRatio="none">${lines}</svg>${nodes}</div></div>`+
+      `<div class="foot"><span class="note fix">${t0.n} · ${t0.d}${st0==='lock'?' · 선행 기술 필요':''}<br>자금 ${S.money}만원 · 경험 ${S.exp}</span>`+
       `<span class="fb">${st0==='open'?`<button data-act="go"><kbd>↵</kbd>${pr0>=100?'완성':'투자 +20% ('+step+'만)'}</button>`:''}<button data-act="x"><kbd>0</kbd>나가기</button></span></div></div>`);
+    const tree=dlg.querySelector('.tree'),sn=dlg.querySelector('.tn.sel');if(sc>=0)tree.scrollTop=sc;
+    if(sn){const a=sn.offsetTop,b2=a+sn.offsetHeight;if(a<tree.scrollTop)tree.scrollTop=a-4;else if(b2>tree.scrollTop+tree.clientHeight)tree.scrollTop=b2-tree.clientHeight+4}
     dlg.onclick=e=>{const b=e.target.closest('button');if(!b)return;
       if(b.dataset.act==='x')return done();
       if(b.dataset.act==='go'){invest(TB[sel]);ui();return render()}
@@ -730,10 +767,10 @@ function techBox(){return new Promise(res=>{
 /* ---------- colony ---------- */
 async function colony(p){const c=p.col,T=PT[p.type],earth=p.role==='earth';
   for(;;){
-    const fest=300+150*p.size,festUsed=c.fest===S.month,removable=c.fac.filter((f,i)=>!(earth&&i<3)),hasT=c.fac.includes('trade'),full=c.fac.length>=slots(p);
+    const fest=270+135*p.size,festUsed=c.fest===S.month,removable=c.fac.filter((f,i)=>!(earth&&i<3)),hasT=c.fac.includes('trade'),full=c.fac.length>=slots(p);
     const head=`${T.n} ${SZ[p.size]} 행성`+(T.d?` · 특성: ${T.d}`:'')+'\n'+
       (earth?'본성 · 반란 없음':`충성도 ${c.loy}% (${sign(dl(p))}/월) · 세율 ${TAX[c.tax]}`+(c.martial?' · 계엄령':''))+` · 수입 +${inc(p)}만원/월\n`+
-      `시설 ${c.fac.length}/${slots(p)}: ${c.fac.map(f=>FAC[f].n).join(', ')||'없음'}`;
+      `시설 ${c.fac.length}/${slots(p)}: ${c.fac.map(f=>FAC[f].n).join(', ')||'없음'}`+(earth?'':` · 방어도 ${defense(p)}`);
     const i=await listBox(`${p.n} 내정`,[
       {label:'시설 건설',sub:full?'빈 자리 없음':`빈 자리 ${slots(p)-c.fac.length}`,off:full},
       {label:'시설 철거',sub:'자리를 비웁니다',off:!removable.length},
@@ -746,7 +783,8 @@ async function colony(p){const c=p.col,T=PT[p.type],earth=p.role==='earth';
     if(i===6){if(earth)await hangar();else{c.martial=!c.martial;toast(c.martial?'계엄령 선포 · 반란은 막지만 민심이 식습니다':'계엄령 해제');ui()}continue}
     if(i===0){const keys=Object.keys(FAC);
       const j=await listBox('시설 건설',keys.map(k=>{const n=cnt(p,k),co=bcost(p,k);
-        return{label:FAC[k].n,sub:FAC[k].d+(n?` · 보유 ${n}`:''),right:co+'만원',off:S.money<co||(FAC[k].uniq&&n>0)}}),`자금 ${S.money}만원 · 빈 자리 ${slots(p)-c.fac.length}`);
+        const lk=FAC[k].tech&&!S.tech[FAC[k].tech];
+        return{label:FAC[k].n,sub:lk?`기술 필요: ${TB[FAC[k].tech].n}`:FAC[k].d+(n?` · 보유 ${n}`:''),right:co+'만원',off:lk||S.money<co||(FAC[k].uniq&&n>0)}}),`자금 ${S.money}만원 · 빈 자리 ${slots(p)-c.fac.length}`);
       if(j>=0){const k=keys[j];S.money-=bcost(p,k);c.fac.push(k);beep(600,.12);toast(`${FAC[k].n} 건설 완료`);ui()}}
     else if(i===1){const idx=c.fac.map((f,n)=>n).filter(n=>!(earth&&n<3));
       const j=await listBox('시설 철거',idx.map(n=>({label:FAC[c.fac[n]].n,sub:FAC[c.fac[n]].d})),'철거한 시설의 비용은 돌려받지 못합니다.');
@@ -777,7 +815,7 @@ async function hangar(){
 }
 async function empire(){for(;;){const cols=PL.filter(owned);
   const i=await listBox(`제국 현황 · ${S.month}월`,cols.map(p=>({label:p.n,
-    sub:p.col.rebel?'반란 중 · 함대로 진압해야 합니다':p.role==='earth'?`본성 · 시설 ${p.col.fac.length}/${slots(p)}`:`${PT[p.type].n} · 충성도 ${p.col.loy}% (${sign(dl(p))}) · 시설 ${p.col.fac.length}/${slots(p)}`+(p.col.loy<30?' · 반란 위험':''),
+    sub:p.col.rebel?'반란 중 · 함대로 진압해야 합니다':p.role==='earth'?`본성 · 시설 ${p.col.fac.length}/${slots(p)}`:`${PT[p.type].n} · 충성도 ${p.col.loy}% (${sign(dl(p))}) · 방어도 ${defense(p)} · 시설 ${p.col.fac.length}/${slots(p)}`+(p.col.loy<50?' · 반란 위험':''),
     right:`+${inc(p)}/월`})),`월 수입 +${totalInc()}만원 · 전투 4회마다 한 달`);
   if(i<0)return;const p=cols[i];
   await msgBox(p.n,`${PT[p.type].n} ${SZ[p.size]} 행성`+(PT[p.type].d?` · 특성: ${PT[p.type].d}`:'')+`\n시설: ${p.col.fac.map(f=>FAC[f].n).join(', ')||'없음'}\n`+
@@ -786,11 +824,11 @@ async function monthTick(){S.month++;let tot=0,labs=0,xp=0;const reb=[];
   for(const p of PL){if(!owned(p))continue;const c=p.col,T=PT[p.type];if(c.rebel)continue;
     tot+=inc(p);labs+=cnt(p,'lab')*(T.lab||1);xp+=3*cnt(p,'academy');
     if(p.role!=='earth'){c.loy=clamp(c.loy+dl(p),0,100);
-      if(!c.martial&&c.loy<35&&Math.random()<(35-c.loy)*.045*(c.fac.includes('fort')?.5:1)*(T.calm||1)*(S.tech.c4?.7:1)){c.rebel=true;
+      if(!c.martial&&c.loy<50&&Math.random()<(50-c.loy)*.045*(c.fac.includes('fort')?.5:1)*(T.calm||1)*(S.tech.c4?.7:1)){c.rebel=true;
         const lostF=c.fac.length?FAC[c.fac.splice(ri(0,c.fac.length-1),1)[0]].n:null;reb.push([p,lostF])}}}
   S.money+=tot;S.exp+=xp;let note='';if(tot>0)sfx.coin();
   const calm=PL.filter(p=>p.role!=='earth'&&owned(p)&&!p.col.rebel);
-  if(calm.length&&Math.random()<.14){const p=pick(calm),ev=pick(['소요 사태','물자 부족','전염병','해적 습격 소문']);p.col.loy=Math.max(0,p.col.loy-8);note=` · ${p.n}에 ${ev}(충성도 -8)`}
+  if(calm.length&&Math.random()<.14){const p=pick(calm),ev=pick(['소요 사태','물자 부족','전염병','해적 습격 소문']);p.col.loy=Math.max(0,p.col.loy-8);p.col.ev={m:S.month,t:ev+' (충성도 -8)'};note=` · ${p.n}에 ${ev}(충성도 -8)`}
   const r=S.rsch&&!S.tech[S.rsch]?TB[S.rsch]:null;
   if(r&&labs){S.prog[r.id]=Math.min(100,(S.prog[r.id]||0)+4*labs);if(S.prog[r.id]>=100&&S.exp>=r.exp){learn(r);note=''}}
   if(!(r&&S.tech[r.id]))toast(`${S.month}월 · 수입 +${tot}만원`+note);
@@ -853,7 +891,7 @@ async function gear(title,names,prices,key,desc){const tk=key==='w'?'w':'s';
 }
 async function run(n){if(busy||mode!=='map'||!cmds()[n])return;busy=true;try{await CMD[n]()}finally{busy=false;save();ui()}}
 async function help(){if(busy||mode!=='map')return;busy=true;
-  await msgBox('도움말','방향키/WASD: 이동 · 숫자키: 명령 · 0/Esc: 나가기\n\n행성 배치와 종류, 지키는 세력은 게임마다 달라집니다. 해적을 잡아 자금과 경험을 모으고, 연구소가 있는 행성에서 기술을 개발해 무기와 보호막을 여십시오.\n점령한 행성은 식민지가 됩니다. 내정에서 시설을 짓고 세율을 정하면 전투를 4번 치를 때마다 한 달이 지나 수입이 들어옵니다. 충성도는 가만두면 떨어지고, 영토가 넓을수록 더 빨리 식습니다. 35% 아래면 반란이 일어날 수 있고 50% 아래면 수입이 줄어듭니다. 함대가 머무는 행성은 충성도가 오릅니다.\n우리 함대의 장비가 좋아질수록 마주치는 적도 강해집니다. 무기와 보호막은 종류마다 고유한 효과가 있습니다.\n지도: 노란 느낌표는 새 정보, 붉은 ✕는 호위 함대, 돌무더기는 해적이 많은 소행성대, 보랏빛 칸은 적을 만나지 않는 성운, 빛나는 고리는 웜홀입니다.\n내구도 10 이하인 전함은 자폭 돌격을 합니다.');
+  await msgBox('도움말','방향키/WASD: 이동 · 숫자키: 명령 · 0/Esc: 나가기\n\n행성 배치와 종류, 지키는 세력은 게임마다 달라집니다. 해적을 잡아 자금과 경험을 모으고, 연구소가 있는 행성에서 기술을 개발해 무기와 보호막을 여십시오.\n점령한 행성은 식민지가 됩니다. 내정에서 시설을 짓고 세율을 정하면 전투를 4번 치를 때마다 한 달이 지나 수입이 들어옵니다. 충성도는 가만두면 떨어지고, 영토가 넓을수록 더 빨리 식습니다. 50% 아래면 반란이 일어날 수 있고 수입도 줄어듭니다. 식민지 근처(2칸 이내)에서 전투에 이기면 그 행성 충성도가 1 오릅니다.\n적 습격대가 식민지 근처에 나타나 행성이나 함대를 노립니다. 방어 시설을 지어 두면 행성이 스스로 막아냅니다.\n우리 함대의 장비가 좋아질수록 마주치는 적도 강해집니다. 무기와 보호막은 종류마다 고유한 효과가 있습니다.\n지도: 노란 느낌표는 새 정보, 붉은 ✕는 호위 함대, 돌무더기는 해적이 많은 소행성대, 보랏빛 칸은 적을 만나지 않는 성운, 빛나는 고리는 웜홀입니다.\n내구도 10 이하인 전함은 자폭 돌격을 합니다.');
   busy=false}
 
 /* ---------- enemies ---------- */
@@ -874,6 +912,8 @@ function eUnit(fac,big,t){const m7=v=>clamp(v,-1,7);let u;
     else if(r<.28){u.n='포격기';u.hp=Math.round(u.hp*.75);u.w++;cls='a'}}
   const base=u.hp,hp=Math.round(u.hp*1.2*(1+power()*.012));
   return{...u,hp,base,t:`e:${fac}:${cls}`,max:hp,w:m7(u.w),sh:m7(u.sh),tint:FA[fac].c}}
+function elite(u){u.elite=true;u.n='정예 '+u.n;u.hp=u.max=Math.round(u.max*1.6);u.base=Math.round(u.base*1.6);u.w=Math.min(7,u.w+1);u.sh=Math.min(7,u.sh+1);
+  if(!u.sk)u.sk=pick(['volley','snipe','barrier','repair','burnall']);return u}
 function gen(x,y){
   const dE=cheb(x,y,EARTH()),near=nearEnemy(x,y),pb=pbonus(),t=near?Math.min(6,near.tier+(pb>>1)):0;
   if(dE>2&&Math.random()<.06){const e=eUnit(near?near.fac:'legion',true,Math.max(2,t));e.lone=true;return[e]}
@@ -881,14 +921,46 @@ function gen(x,y){
   if(pb>=2)n=Math.min(8,n+1);
   const out=[];
   for(let i=0;i<n;i++)out.push(near&&near.fac!=='pirate'&&Math.random()<.5?eUnit(near.fac,false,t):eUnit('pirate',false,(dE<=2?0:Math.max(1,t))+pb));
+  if(S.month>1||dE>2)for(const e of out)if(Math.random()<.1)elite(e);
   return out}
 function planetFleet(p){const[b,s]=FA[p.fac].mix,out=[],hq=p.role==='hq';
   for(let i=0;i<b;i++){const e=eUnit(p.fac,true,p.tier);if(hq){e.max+=40;e.hp+=40;e.base+=40}out.push(e)}
-  for(let i=0;i<s;i++)out.push(eUnit(p.fac,false,p.tier));return out}
+  for(let i=0;i<s;i++)out.push(eUnit(p.fac,false,p.tier));
+  if(p.tier>=2&&Math.random()<.4)elite(out[b+ri(0,s-1)]);return out}
 function guardFleet(){const out=[];for(let i=0;i<2;i++){const e=eUnit('legion',true,5);e.n='호위 전함';out.push(e)}
   for(let i=0;i<6;i++)out.push(eUnit('legion',false,5));return out}
 function rebelFleet(p){const t=Math.max(1,p.tier-1),out=[eUnit(p.fac,true,t)];for(let i=0;i<4;i++)out.push(eUnit(p.fac,false,t));
   out.forEach(e=>e.n='반란 '+e.n);return out}
+
+/* ---------- raids: enemy squads that hunt the fleet or strike a colony ---------- */
+function spawnRaid(){const cols=PL.filter(p=>p.role!=='earth'&&owned(p)&&!p.col.rebel);if(!cols.length||S.raids.length>=2)return;
+  const p=pick(cols);
+  for(let t=0;t<40;t++){const an=rnd(0,6.28),d=ri(3,4),x=clamp(Math.round(p.x+Math.cos(an)*d),0,COLS-1),y=clamp(Math.round(p.y+Math.sin(an)*d),0,ROWS-1);
+    if(PL.some(q=>q.x===x&&q.y===y)||Math.max(Math.abs(x-S.x),Math.abs(y-S.y))<2||S.raids.some(r=>r.x===x&&r.y===y))continue;
+    const src=PL.filter(q=>!owned(q)).sort((a,b)=>cheb(x,y,a)-cheb(x,y,b))[0];
+    const r={x,y,fac:src&&Math.random()<.6?src.fac:'pirate',tier:clamp(p.tier-1+(pbonus()>>1),1,5),tg:Math.random()<.5?'fleet':'planet',pid:p.id,n:0};
+    S.raids.push(r);sfx.alarm();toast(`${p.n} 근처에 ${FA[r.fac].n} 습격대 출현 · `+(r.tg==='fleet'?'우리 함대를 쫓습니다':'행성을 노립니다'));return}}
+async function raidFight(r,ox,oy,world){const out=[eUnit(r.fac,true,r.tier)];for(let i=0;i<3;i++)out.push(eUnit(r.fac,false,r.tier));if(Math.random()<.25)elite(out[ri(1,3)]);out.forEach(e=>e.n='습격 '+e.n);
+  const res=await battle(out,{intro:`${FA[r.fac].n} 습격대와 맞붙었다!`});if(S!==world)return;
+  if(res==='win')S.raids=S.raids.filter(z=>z!==r);else if(res==='flee'){S.x=ox;S.y=oy}}
+async function raidPlanet(r,p){S.raids=S.raids.filter(z=>z!==r);const c=p.col,R=(15+12*r.tier)*rnd(.8,1.2),D=defense(p);
+  if(D>=R){if(S.tech.d3)c.loy=Math.min(100,c.loy+3);beep(880,.2);c.ev={m:S.month,t:'습격 격퇴'};
+    toast(`${p.n}의 방어 시설이 습격대를 격퇴했습니다`+(S.tech.d3?' · 충성도 +3':''));return}
+  const loss=Math.round((8+r.tier)*(c.fac.includes('radar')?.5:1));c.loy=Math.max(0,c.loy-loss);let lostF=null;
+  if(!c.fac.includes('shieldgen')&&c.fac.length&&R>D*1.5&&Math.random()<.6)lostF=FAC[c.fac.splice(ri(0,c.fac.length-1),1)[0]].n;
+  c.ev={m:S.month,t:'습격 피해 (충성도 -'+loss+')'};beep(140,.4,'sawtooth',.06);ui();
+  await msgBox('습격',`${FA[r.fac].n} 습격대가 ${p.n}을(를) 공격했습니다!\n충성도 -${loss}`+(lostF?`\n${lostF}이(가) 파괴되었습니다.`:'')+`\n\n방어도 ${D} · 방어 시설을 늘리면 행성이 스스로 막아냅니다.`)}
+async function raidStep(ox,oy,world){
+  const here0=S.raids.find(z=>z.x===S.x&&z.y===S.y);
+  if(here0){ui();await sleep(160);await raidFight(here0,ox,oy,world);return true}
+  for(const r of S.raids.slice()){r.n++;let tp=r.tg==='planet'?PL.find(p=>p.id===r.pid):null;
+    if(r.tg==='planet'&&(!tp||!owned(tp)||tp.col.rebel)){r.tg='fleet';tp=null}
+    if(tp&&r.n%2)continue;
+    const T=tp||{x:S.x,y:S.y};r.x+=Math.sign(T.x-r.x);r.y+=Math.sign(T.y-r.y);
+    if(r.x===S.x&&r.y===S.y){ui();await sleep(300);await raidFight(r,ox,oy,world);return true}
+    if(tp&&r.x===tp.x&&r.y===tp.y){await raidPlanet(r,tp);if(S!==world)return true}}
+  if(S.raids.length<2&&Math.random()<.035)spawnRaid();
+  return false}
 
 /* ---------- movement ---------- */
 async function move(dx,dy){if(busy||mode!=='map')return;const nx=S.x+dx,ny=S.y+dy;if(nx<0||ny<0||nx>=COLS||ny>=ROWS)return;
@@ -919,6 +991,7 @@ async function step(nx,ny){
   }
   S.x=nx;S.y=ny;S.moves++;sfx.move();
   if(S.moves%10===0)S.loy=Math.max(0,S.loy-1);
+  if(await raidStep(ox,oy,world))return;
   if(p)return;
   ui();
   if(S.worm){const i=S.worm.findIndex(q=>q[0]===nx&&q[1]===ny);
@@ -971,11 +1044,11 @@ function afflict(tg,key,turns,label,col){if(tg.hp<=0)return;if(ELEC.includes(tg.
 function cleanse(list){for(const f of list){f.burn=0;f.stun=0;f.blind=0;f.mark=0}}
 function hit(tg,d,pierce,src){
   if(tg.hp<=0)return;
-  if(!pierce&&tg.thin){tg.thin=false;fl(tg,'막음','#7df');return}
+  if(pierce!==true&&tg.thin){tg.thin=false;fl(tg,'막음','#7df');return}
   if(tg.mark)d*=1.5;
   if(!isE(tg)&&S.tech.t2)d*=.9;
-  if(!pierce&&tg.wall>0){const a=Math.min(tg.wall,Math.round(d));tg.wall-=a;d-=a;if(d<1){fl(tg,'흡수','#fd6');return}}
-  if(!pierce&&tg.sh>=0&&Math.random()<(tg.shc||.6)){d*=1-(.2+.07*tg.sh);tg.flash=now()+AD(220);
+  if(pierce!==true&&tg.wall>0){const a=Math.min(tg.wall,Math.round(d));tg.wall-=a;d-=a;if(d<1){fl(tg,'흡수','#fd6');return}}
+  if(pierce!==true&&tg.sh>=0&&Math.random()<(tg.shc||.6)){d*=1-(.2+.07*tg.sh)*(1-(+pierce||0));tg.flash=now()+AD(220);
     if(src&&src!==tg&&src.hp>0&&FIRE.includes(tg.sh)){const r=4+tg.sh;src.hp=Math.max(0,src.hp-r);src.hitAt=now();fl(src,'-'+r,'#ff9955');if(src.hp<=0)kill(src)}}
   d=Math.max(1,Math.round(d));tg.hp=Math.max(0,tg.hp-d);tg.hitAt=now();fl(tg,'-'+d,'#fff');
   if(tg.hp<=0)kill(tg)}
@@ -1015,7 +1088,7 @@ async function act(s,foes,friends,focus,d){
     const guard=(col,fn)=>{link(s,fr,col);for(const f of fr){fn(f);fxOn('shield',f,col)}beep(990,.15)};
     const top=()=>lf.reduce((a,b)=>b.hp>a.hp?b:a);
     switch(sk){
-      case'sung':{const t2=top();beam(s,t2,9);hit(t2,wd(s)*2.5+20,false,s);afflict(t2,'stun',1,'기절','#ffee55');break}
+      case'sung':{const t2=top();await orbCast(s,[t2],'#ffc857');if(t2.hp>0){beam(s,t2,9);hit(t2,wd(s)*1.5,.1,s)}break}
       case'gu':await orbCast(s,lf,'#ff9030');for(const e of lf)hit(e,ri(35,40),false,s);break;
       case'ok':cleanse(fr);heal(30);break;
       case'heon':case'barrier':guard('#77ddff',f=>f.thin=true);break;
@@ -1063,7 +1136,8 @@ function pickTarget(){return new Promise(res=>{
 async function battle(E,o){
   B={A:[...S.fleet],E,fx:[],boss:o.boss,selecting:false,t0:now(),shake:0};place();setMode('battle');
   bprev.textContent='';bmsg.textContent='';hover=null;sfx.alarm();setMusic(o.boss?'boss':'battle');
-  say(o.intro||(E[0].lone?`${E[0].n} 한 척이 홀로 나타났다!`:`적 함대 ${E.length}척과 마주쳤다!`));
+  const nEl=E.filter(e=>e.elite).length;
+  say((o.intro||(E[0].lone?`${E[0].n} 한 척이 홀로 나타났다!`:`적 함대 ${E.length}척과 마주쳤다!`))+(nEl?` 정예 ${nEl}척이 섞여 있다!`:''));
   if(S.tech.t4){await bs(125);say('기습 전술! 선제 포격을 퍼붓는다.');const a0=B.A[0];for(const e of E){beam(a0,e,2);hit(e,10,false)}await bs(150)}
   let auto=false,res=null,helped=false;const dE=cheb(S.x,S.y,EARTH());
   while(!res){
@@ -1104,10 +1178,12 @@ async function battle(E,o){
     await msgBox('게임 오버','하람과 형제들의 전함이 모두 격침되었습니다.\n별들은 블랙홀 군단의 손에 넘어갔습니다.','새 은하에서 다시');
     setState(newState());save();await cine(opening());return'over'}
   if(res==='win'){
-    let m=0;for(const e of E)m+=40+Math.round((e.base||e.max)/2)+(e.w+1)*25;
-    if(E[0].lone)m+=ri(800,1000);if(o.boss)m+=o.boss.tier*500;m=Math.round(m*.45*1.3);
-    const x=E.length+(o.boss?15:0);S.money+=m;S.exp+=x;S.loy=Math.max(0,S.loy-2);
+    let m=0;for(const e of E)m+=40+Math.round((e.base||e.max)/2)+(e.w+1)*25+(e.elite?120:0);
+    if(E[0].lone)m+=ri(800,1000);if(o.boss)m+=o.boss.tier*500;m=Math.round(m*.45*1.3*1.1);
+    const x=E.length+(o.boss?15:0)+2*E.filter(e=>e.elite).length;S.money+=m;S.exp+=x;S.loy=Math.max(0,S.loy-2);
     let txt=`자금 +${m}만원\n경험 +${x}`;if(lost)txt+=`\n아군 ${lost}척 격침`;
+    const cheer=PL.filter(p=>p.role!=='earth'&&owned(p)&&!p.col.rebel&&cheb(S.x,S.y,p)<=2);
+    if(cheer.length){for(const p of cheer)p.col.loy=Math.min(100,p.col.loy+1);txt+=`\n${cheer.map(p=>p.n).join(', ')} 충성도 +1 (근처에서 승전)`}
     if(S.tech.e1){for(const s of S.fleet)s.hp=Math.min(s.max,s.hp+Math.round(s.max*.1));txt+='\n응급 수리 기술이 내구도를 10% 되살렸습니다.'}
     const hurt=S.fleet.filter(s=>s.hp<=10).length;if(hurt)txt+=`\n\n내구도 10 이하 전함 ${hurt}척은 다음 전투에서 자폭합니다. 조선소에서 수리하십시오.`;
     if(S.loy<60){const before=S.fleet.length;S.fleet=S.fleet.filter(s=>BRO.includes(s.t)||Math.random()>=(60-S.loy)/150);
@@ -1131,6 +1207,8 @@ function drawShip(s,i,flip,t){const p=B.pos.get(s);if(!p)return;
     g.drawImage(im,0,0,138,54);
     if(hitNow){g.globalCompositeOperation='lighter';g.globalAlpha=.8;g.drawImage(im,0,0,138,54)}
     g.restore();
+    if(s.elite){const ex=x+(flip?118:14),ey=y-8+Math.round(Math.sin(t/300)*1.5);g.fillStyle='#ffc857';g.fillRect(ex-6,ey+3,13,4);g.fillRect(ex-6,ey-1,3,4);g.fillRect(ex-1,ey-3,3,6);g.fillRect(ex+4,ey-1,3,4);
+      g.strokeStyle='#ffc857';g.lineWidth=1;g.globalAlpha=.35+.25*Math.sin(t/250);g.beginPath();g.ellipse(x+66,y+24,70,27,0,0,6.2832);g.stroke();g.globalAlpha=1}
     if(s.thin||s.wall>0||(s.flash&&t<s.flash)){g.strokeStyle=(s.flash&&t<s.flash)?'#fff':s.thin?'#7df':'#fd6';g.lineWidth=2;g.setLineDash([6,4]);g.lineDashOffset=-t/40;
       g.beginPath();g.ellipse(x+66,y+24,72,29,0,0,6.2832);g.stroke();g.setLineDash([])}}
   if(s.hp>0){const by=p.y+53,r=s.hp/s.max;
@@ -1147,13 +1225,28 @@ function drawBattle(t){
   for(const s of stars){g.fillStyle=s[2]>1?'#fff':'#9aa0c8';g.fillRect(Math.round(((s[0]-t*s[3]/1000)%640+640)%640),s[1],s[2],s[2])}
   if(B.boss){const sz=216;g.globalAlpha=.42;g.drawImage(planetCv(B.boss,24),150-sz/2,165-sz/2,sz,sz);g.globalAlpha=1}
   B.A.forEach((s,i)=>drawShip(s,i,false,t));B.E.forEach((s,i)=>drawShip(s,i,true,t));
-  const af=2/spd,LIFE={beam:210,boom:560,cast:420,txt:760,orb:800,heal:700,shield:600,link:380};B.fx=B.fx.filter(f=>(t-f.t0)/af<LIFE[f.k]);
+  const af=2/spd,LIFE={beam:300,boom:560,cast:420,txt:760,orb:800,heal:700,shield:600,link:380};B.fx=B.fx.filter(f=>(t-f.t0)/af<LIFE[f.k]);
   for(const f of B.fx){const a=(t-f.t0)/af;
-    if(f.k==='beam'){const ti=Math.max(0,f.tier),col=BC[Math.min(9,ti)],al=1-a/210,w=2+Math.min(ti,7)*.9;
-      g.lineCap='butt';g.strokeStyle=col;g.globalAlpha=al*.3;g.lineWidth=w*2.6;g.beginPath();g.moveTo(f.x1,f.y1);g.lineTo(f.x2,f.y2);g.stroke();
-      g.globalAlpha=al;g.lineWidth=w;g.beginPath();g.moveTo(f.x1,f.y1);g.lineTo(f.x2,f.y2);g.stroke();
-      if(ti>=4){g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(f.x1,f.y1);g.lineTo(f.x2,f.y2);g.stroke()}
-      const z=Math.round(6+w*2);g.fillStyle='#fff';g.fillRect(f.x2-z/2,f.y2-z/2,z,z);g.globalAlpha=1}
+    if(f.k==='beam'){const ti=f.tier,k=Math.min(1,a/LIFE.beam),al=1-k,dx=f.x2-f.x1,dy=f.y2-f.y1,Ln=Math.hypot(dx,dy)||1,ux=dx/Ln,uy=dy/Ln,px=-uy,py=ux,e=Math.min(1,k*1.6);
+      const line=(w,col,alpha)=>{g.strokeStyle=col;g.lineWidth=w;g.globalAlpha=alpha;g.beginPath();g.moveTo(f.x1,f.y1);g.lineTo(f.x2,f.y2);g.stroke()};
+      const at=q=>[f.x1+dx*q,f.y1+dy*q],spark=z=>{g.globalAlpha=al;g.fillStyle='#fff';g.fillRect(f.x2-z/2,f.y2-z/2,z,z)};
+      g.lineCap='butt';
+      switch(ti){
+        case -1:{const[x,y]=at(e);g.globalAlpha=1;g.fillStyle='#c8c8d0';g.fillRect(x-3,y-3,6,6);g.fillStyle='#fff';g.fillRect(x-1,y-1,3,3);if(e>=1)spark(6);break}
+        case 0:line(5,'#ff5050',al*.25);line(1.5,'#ff5050',al);spark(5);break;
+        case 1:line(9,'#60e0ff',al*.3);line(3.5,'#60e0ff',al);line(1,'#fff',al);spark(8);break;
+        case 2:{for(let n=4;n>=0;n--){const q=e-n*.09;if(q<0)continue;const[x,y]=at(q),z=12-n*1.8;g.globalAlpha=1-n*.18;g.fillStyle='#60e0ff';g.fillRect(x-z/2,y-z/2,z,z);if(!n){g.fillStyle='#fff';g.fillRect(x-2,y-2,5,5)}}if(e>=1)spark(12);break}
+        case 3:{const[xa,ya]=at(Math.max(0,e-.16)),[xb,yb]=at(e);g.globalAlpha=1;g.strokeStyle='#ffe060';g.lineWidth=4;g.beginPath();g.moveTo(xa,ya);g.lineTo(xb,yb);g.stroke();g.strokeStyle='#fff';g.lineWidth=1.5;g.stroke();if(e>=1)spark(8);break}
+        case 4:line(22,'#b0c8ff',al*.25);line(11,'#b0c8ff',al);line(4,'#fff',al);g.strokeStyle='#fff';g.lineWidth=2;g.globalAlpha=al;g.beginPath();g.arc(f.x1+ux*44,f.y1+uy*44,8+k*14,0,6.2832);g.stroke();spark(16);break;
+        case 5:{for(const off of[-8,0,8]){const q=Math.max(0,Math.min(1,e*1.1-Math.abs(off)*.012)),[x,y]=at(q);g.globalAlpha=1;g.fillStyle='#70ff80';g.fillRect(x+px*off-6,y+py*off-2,12,4);g.fillStyle='#fff';g.fillRect(x+px*off+2,y+py*off-1,4,2)}if(e>=1)spark(10);break}
+        case 6:{for(let n=5;n>=0;n--){const q=e-n*.06;if(q<0)continue;const[x,y]=at(q),r=10-n*1.4;g.globalAlpha=1-n*.15;g.fillStyle=n===0?'#fff7b0':n<3?'#ff9030':'#f2511b';g.beginPath();g.arc(x,y+Math.sin(q*14+n)*2,r,0,6.2832);g.fill()}
+          if(e>=1){g.globalAlpha=al;g.fillStyle='#ff9030';g.beginPath();g.arc(f.x2,f.y2,10+k*16,0,6.2832);g.fill()}break}
+        case 7:{g.globalAlpha=al;for(const[w,col]of[[9,'#60e0ff'],[3,'#fff']]){g.strokeStyle=col;g.lineWidth=w;g.beginPath();
+            for(let q=0;q<=1.001;q+=.04){const[x,y]=at(q),o=Math.sin(q*18-t/40)*7*Math.sin(q*Math.PI);if(q)g.lineTo(x+px*o,y+py*o);else g.moveTo(x,y)}g.stroke()}
+          g.strokeStyle='#fff';g.lineWidth=2;for(const r of[8+k*22,4+k*12]){g.beginPath();g.arc(f.x2,f.y2,r,0,6.2832);g.stroke()}break}
+        default:{const col=BC[Math.min(9,Math.max(0,ti))];line(16,col,al*.3);line(7,col,al);line(2,'#fff',al);spark(14)}
+      }
+      g.globalAlpha=1}
     else if(f.k==='boom'){const k=a/560,cols=['#fff7b0','#ffb22e','#f2511b','#a3200e'];
       g.strokeStyle='#ffb22e';g.globalAlpha=1-k;g.lineWidth=4;g.beginPath();g.arc(f.x,f.y,10+k*58,0,6.2832);g.stroke();g.globalAlpha=1;
       for(const b of f.bits){const r=k*52*b[1];g.fillStyle=cols[Math.min(3,b[2]+Math.floor(k*2.4))];
@@ -1321,6 +1414,7 @@ function sanitize(o){
     const r={t:s.t,n:TY[s.t].n,max,hp:num(s.hp,1,max,max),w:num(s.w,-1,7,-1),sh:num(s.sh,-1,7,-1)};
     if(typeof s.tint==='string'&&/^#[0-9a-f]{3,6}$/i.test(s.tint))r.tint=s.tint;return r});
   const fleet=ships(o.fleet,8),hangar=ships(o.hangar,11);
+  const raids=(Array.isArray(o.raids)?o.raids:[]).slice(0,4).filter(r=>r&&FA[r.fac]).map(r=>({x:num(r.x,0,COLS-1,0),y:num(r.y,0,ROWS-1,0),fac:r.fac,tier:num(r.tier,1,6,1),tg:r.tg==='planet'?'planet':'fleet',pid:typeof r.pid==='string'&&/^p\d{1,2}$/.test(r.pid)?r.pid:'p0',n:num(r.n,0,1e9,0)}));
   if(!fleet.some(s=>BRO.includes(s.t)))return null;
   const cell=k=>/^\d{1,2},\d{1,2}$/.test(k),tiles={};
   if(o.tiles&&typeof o.tiles==='object')for(const k of Object.keys(o.tiles).slice(0,80))if(cell(k)&&(o.tiles[k]==='a'||o.tiles[k]==='n'))tiles[k]=o.tiles[k];
@@ -1328,7 +1422,7 @@ function sanitize(o){
   const tech=flags(o.tech,k=>!!TB[k]);tech.w0=true;const prog={};
   if(o.prog&&typeof o.prog==='object')for(const k of Object.keys(o.prog))if(TB[k]&&!tech[k])prog[k]=num(o.prog[k],0,100,0);
   return{v:2,x:num(o.x,0,COLS-1,pl[0].x),y:num(o.y,0,ROWS-1,pl[0].y),money:num(o.money,0,9999999,0),exp:num(o.exp,0,99999,0),
-    loy:num(o.loy,0,100,80),moves:num(o.moves,0,1e9,0),month:num(o.month,1,99999,1),fights:num(o.fights,0,1e9,0),tech,prog,rsch:TB[o.rsch]&&!tech[o.rsch]?o.rsch:null,fleet,hangar,pl,tiles,worm,
+    loy:num(o.loy,0,100,80),moves:num(o.moves,0,1e9,0),month:num(o.month,1,99999,1),fights:num(o.fights,0,1e9,0),tech,prog,rsch:TB[o.rsch]&&!tech[o.rsch]?o.rsch:null,fleet,hangar,raids,pl,tiles,worm,
     conq,info:flags(o.info,k=>ids.includes(k)),guard:flags(o.guard,cell),joined:flags(o.joined,k=>['gu','ok','heon'].includes(k)),lover:!!o.lover}}
 function textBox(title,text,value){return new Promise(res=>{
   openDlg(`<div class="win"><h2>${title}</h2><div class="body"><div class="txt">${text}</div><textarea id="saveText" readonly></textarea></div><div class="foot"><button data-i="1">복사</button><button data-i="0"><kbd>↵</kbd>닫기</button></div></div>`);
