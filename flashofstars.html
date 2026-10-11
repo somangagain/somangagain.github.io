@@ -332,7 +332,7 @@ function genWorld(){
 }
 function newState(){const w=genWorld();return{v:2,x:w.pl[0].x,y:w.pl[0].y,money:300,exp:0,loy:80,moves:0,month:1,
   tech:{w0:true},prog:{},rsch:null,
-  fleet:[ship('sung',-1,-1,1),ship('fighter',-1,-1,1),ship('fighter',-1,-1,1)],pl:w.pl,tiles:w.tiles,worm:w.worm,conq:{},info:{},guard:{},joined:{},lover:false}}
+  fleet:[ship('sung',-1,-1,1),ship('fighter',-1,-1,1),ship('fighter',-1,-1,1)],hangar:[],pl:w.pl,tiles:w.tiles,worm:w.worm,conq:{},info:{},guard:{},joined:{},lover:false}}
 function setState(st){S=st;PL=S.pl;for(const p of PL)p.c=PT[p.type].c[p.seed%PT[p.type].c.length];for(const k in pcache)delete pcache[k];V.x=S.x;V.y=S.y;trail=[];prev={}}
 const KEY='sevenstars-v2',SETKEY='sevenstars-set';
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -341,8 +341,9 @@ let snd=true,bgm=true,spd=1;
 try{const o=JSON.parse(localStorage.getItem(SETKEY));if(o){snd=o.snd!==false;bgm=o.bgm!==false;spd=[1,2,4,8].includes(o.spd)?o.spd:1}}catch(e){}
 function saveSet(){try{localStorage.setItem(SETKEY,JSON.stringify({snd,bgm,spd}))}catch(e){}}
 const wn=s=>s.w>=0?W[s.w]:'기본포', sn=s=>s.sh>=0?SH[s.sh]:'보호막 없음', wd=s=>s.w>=0?WD[s.w]:10;
-const reserve=()=>['gu','ok','heon'].filter(k=>!S.joined[k]).length;
-const canAdd=()=>S.fleet.length<8-reserve();
+const canAdd=()=>S.fleet.length<8;
+/* a rescued brother joins the fleet, or waits in the Earth hangar when the fleet is full */
+function joinBro(t){const s=ship(t);if(canAdd()){S.fleet.push(s);return'함대에 합류합니다.'}S.hangar.push(s);return'함대가 가득 차 지구 격납고에서 기다립니다.'}
 const here=()=>PL.find(p=>p.x===S.x&&p.y===S.y);
 const EARTH=()=>PL[0],HQ=()=>PL.find(p=>p.role==='hq');
 const owned=p=>p.role==='earth'||!!S.conq[p.id];
@@ -626,7 +627,7 @@ function ui(){
     <div><dt>과학 기술</dt><dd${ch('tc')}>${tc}<small> /${TECH.length}</small></dd></div>
     <div><dt>자금</dt><dd${ch('money')}>${S.money}</dd></div>
     <div><dt>경험</dt><dd${ch('exp')}>${S.exp}</dd></div>
-    <div><dt>전함</dt><dd${ch('n')}>${S.fleet.length} 척</dd></div>
+    <div><dt>전함</dt><dd${ch('n')}>${S.fleet.length} 척${S.hangar.length?`<small> +격납고 ${S.hangar.length}</small>`:''}</dd></div>
     <div class="bar"><dt>${r?'연구 '+r.n:'연구 없음'}</dt><dd${ch('pr')}>${r?pr+'%':'-'}</dd><i style="--v:${pr}%"></i></div>
     <div class="bar${S.loy<60?' warn':''}"><dt>충성도</dt><dd${ch('loy')}>${S.loy}%</dd><i style="--v:${S.loy}%"></i></div></dl>
     <div class="hp" title="함대 내구도">${S.fleet.map(s=>`<span class="${BRO.includes(s.t)?'bro':''}" style="--v:${Math.round(s.hp/s.max*100)}%;--c:${hpCol(s.hp/s.max)}"></span>`).join('')}</div>
@@ -661,8 +662,8 @@ function listBox(title,items,note='',text='',cls=''){return new Promise(res=>{
   const done=i=>{closeDlg();res(i)};
   dlg.onclick=e=>{const b=e.target.closest('button[data-i]');if(b&&!b.disabled)done(+b.dataset.i)};
   keyFn=k=>{if((k==='Escape'||k==='0')&&!cls)done(-1);else if(/^[1-9]$/.test(k)){const i=+k-1;if(items[i]&&!items[i].off)done(i)}else if(cls&&k==='Enter')done(0);return true};})}
-function fleetBox(prompt,pickable){return new Promise(res=>{
-  const f=S.fleet,ok=s=>!pickable||pickable(s);
+function fleetBox(prompt,pickable,list){return new Promise(res=>{
+  const f=list||S.fleet,ok=s=>!pickable||pickable(s);
   openDlg(`<div class="win full"><div class="fleet">`+f.map((s,i)=>`<button class="card ${ok(s)?'':'dim'}" data-i="${i}">${pickable&&ok(s)?`<kbd>${i+1}</kbd>`:''}<canvas width="138" height="54"></canvas><b>${s.n}</b><i>${icon('w',s.w)}${wn(s)}</i><i>${icon('s',s.sh)}${sn(s)}</i><small>${SK[s.t]||TRD[s.t]||'스킬 없음'}</small><em style="--v:${Math.round(s.hp/s.max*100)}%;--c:${shade(hpCol(s.hp/s.max),.55)}">${s.hp}/${s.max}</em></button>`).join('')+
     `</div><div class="foot"><span class="note">${prompt}</span><button data-i="-1"><kbd>0</kbd>나가기</button></div></div>`);
   dlg.querySelectorAll('.card canvas').forEach((c,i)=>{const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(sprite(f[i].t,f[i].tint),0,0,138,54)});
@@ -674,7 +675,7 @@ function fleetBox(prompt,pickable){return new Promise(res=>{
 /* ---------- tech tree ---------- */
 const tstate=t=>S.tech[t.id]?'done':t.req.every(r=>S.tech[r])?'open':'lock';
 function learn(t){S.tech[t.id]=true;delete S.prog[t.id];if(S.rsch===t.id)S.rsch=null;
-  if(t.id==='e0'||t.id==='e2')for(const s of S.fleet){const m=Math.round(TY[s.t].hp*hpMul());s.hp+=m-s.max;s.max=m}
+  if(t.id==='e0'||t.id==='e2')for(const s of[...S.fleet,...S.hangar]){const m=Math.round(TY[s.t].hp*hpMul());s.hp=Math.max(1,s.hp+m-s.max);s.max=m}
   sfx.learn();toast(`${t.n} 개발 완료 · ${t.d}`)}
 function invest(t){const st=tstate(t);
   if(st==='done')return toast('이미 개발한 기술입니다.');
@@ -719,8 +720,10 @@ async function colony(p){const c=p.col,T=PT[p.type],earth=p.role==='earth';
       {label:'세율 조정',sub:earth?'본성은 고정':`${TAX[c.tax]} → ${TAX[(c.tax+1)%3]}`,off:earth},
       {label:'축제 개최',sub:'충성도 +15',right:fest+'만원',off:earth||S.money<fest||c.loy>=100},
       {label:'중고 무기 매각',sub:hasT?'장비를 반값에':'교역소 필요',off:!hasT},
-      {label:'중고 전함 매각',sub:hasT?'전함을 반값에':'교역소 필요',off:!hasT}],`자금 ${S.money}만원`,head);
+      {label:'중고 전함 매각',sub:hasT?'전함을 반값에':'교역소 필요',off:!hasT},
+      ...(earth?[{label:'격납고',sub:`보관 ${S.hangar.length}/8척 · 함선을 맡기거나 꺼냅니다`}]:[])],`자금 ${S.money}만원`,head);
     if(i<0)return;
+    if(i===6){await hangar();continue}
     if(i===0){const keys=Object.keys(FAC);
       const j=await listBox('시설 건설',keys.map(k=>{const n=cnt(p,k),co=bcost(p,k);
         return{label:FAC[k].n,sub:FAC[k].d+(n?` · 보유 ${n}`:''),right:co+'만원',off:S.money<co||(FAC[k].uniq&&n>0)}}),`자금 ${S.money}만원 · 빈 자리 ${slots(p)-c.fac.length}`);
@@ -735,6 +738,21 @@ async function colony(p){const c=p.col,T=PT[p.type],earth=p.role==='earth';
     else{for(;;){const k=await fleetBox('반값에 팔 전함을 고르세요 (형제의 전함은 팔 수 없습니다)',s=>!BRO.includes(s.t));if(k<0)break;
       const s=S.fleet[k],v=Math.floor(((TY[s.t].price||100)+(s.w>=0?WP[s.w]:0)+(s.sh>=0?SP[s.sh]:0))/2);
       S.fleet.splice(k,1);S.money+=v;ui();beep(520);toast(`+${v}만원`)}}
+  }
+}
+async function hangar(){
+  for(;;){const full=S.hangar.length>=8,canStore=s=>S.fleet.length>1&&(!BRO.includes(s.t)||S.fleet.filter(z=>BRO.includes(z.t)).length>1);
+    const i=await listBox('격납고',[
+      {label:'함선 맡기기',sub:full?'격납고가 가득 찼습니다':'함대의 전함을 격납고로',off:full||!S.fleet.some(canStore)},
+      {label:'함선 꺼내기',sub:!S.hangar.length?'보관 중인 전함이 없습니다':S.fleet.length>=8?'함대가 가득 찼습니다':'격납고의 전함을 함대로',off:!S.hangar.length||S.fleet.length>=8},
+      {label:'보관 중인 전함 보기',off:!S.hangar.length}],`함대 ${S.fleet.length}/8척 · 격납고 ${S.hangar.length}/8척`,
+      '지구 격납고에는 전함을 8척까지 보관할 수 있습니다.\n보관한 전함은 월급이 들지 않고 전투에도 나가지 않습니다. 함대에는 형제의 전함이 한 척은 남아 있어야 합니다.');
+    if(i<0)return;
+    if(i===0){for(;;){if(S.hangar.length>=8)break;const k=await fleetBox(`격납고에 맡길 전함을 고르세요 (보관 ${S.hangar.length}/8)`,canStore);if(k<0)break;
+      S.hangar.push(S.fleet.splice(k,1)[0]);ui();beep(520)}}
+    else if(i===1){for(;;){if(!S.hangar.length||S.fleet.length>=8)break;const k=await fleetBox(`함대로 꺼낼 전함을 고르세요 (함대 ${S.fleet.length}/8)`,()=>true,S.hangar);if(k<0)break;
+      S.fleet.push(S.hangar.splice(k,1)[0]);ui();beep(600)}}
+    else await fleetBox('격납고에 보관 중인 전함',null,S.hangar);
   }
 }
 async function empire(){for(;;){const cols=PL.filter(owned);
@@ -769,11 +787,11 @@ const CMD={
     toast(spent<need?`자금이 모자라 일부만 수리했습니다 · -${spent}만원`:`함대 수리 완료 · -${spent}만원`)},
   async 2(){const p=here(),id=p.id;
     if(p.role==='earth'){
-      if(S.lover&&!S.joined.gu){S.joined.gu=true;S.fleet.push(ship('gu'));S.money+=3000;beep(880,.2);
-        return msgBox('정보','한울: "그녀를 구해 주었구나. 이제 나도 함께 싸우겠다."\n\n큰형 한울가 군자금 3000만원과 함께 함대에 합류했습니다.\n이제부터는 도움 요청을 할 수 없습니다.')}
+      if(S.lover&&!S.joined.gu){S.joined.gu=true;const jm=joinBro('gu');S.money+=3000;beep(880,.2);
+        return msgBox('정보','한울: "그녀를 구해 주었구나. 이제 나도 함께 싸우겠다."\n\n큰형 한울이 군자금 3000만원을 가져왔습니다. 한울의 전함이 '+jm+'\n이제부터는 도움 요청을 할 수 없습니다.')}
       if(!S.info.p0){S.info.p0=true;const q=PL.find(z=>z.role==='pirate'),dx=q.x-p.x,dy=q.y-p.y;
         const dir=(dy<-1?'북':dy>1?'남':'')+(dx>1?'동':dx<-1?'서':'')||'바로 곁';
-        return msgBox('정보',`별 관측소: 인공 행성 가운데 가장 약한 곳은 ${dir}쪽의 해적 기지 「${q.n}」입니다.\n\n지구 근처에서 전투가 벌어지면 큰형 한울가 도와줄 것입니다. 행성을 점령하면 식민지가 되어 다달이 수입을 보냅니다. 민심을 돌보지 않으면 반란이 일어납니다.`)}
+        return msgBox('정보',`별 관측소: 인공 행성 가운데 가장 약한 곳은 ${dir}쪽의 해적 기지 「${q.n}」입니다.\n\n지구 근처에서 전투가 벌어지면 큰형 한울이 도와줄 것입니다. 행성을 점령하면 식민지가 되어 다달이 수입을 보냅니다. 민심을 돌보지 않으면 반란이 일어납니다.`)}
       return toast('새로운 정보가 없습니다.');
     }
     if(S.info[id])return toast('새로운 정보가 없습니다.');
@@ -781,9 +799,9 @@ const CMD={
     switch(p.role){
       case'pirate':return msgBox('정보','우주해적의 근거지를 손에 넣었습니다.\n교역소가 남아 있어 쓰던 무기와 전함을 중고로 팔 수 있습니다. 조선소를 지으면 값싼 해적선도 살 수 있습니다.');
       case'gold':S.money+=5000;return msgBox('정보','형제는 이곳에 없었습니다.\n대신 적이 숨겨 둔 군자금 5000만원을 찾아냈습니다!');
-      case'heon':S.joined.heon=true;S.fleet.push(ship('heon'));return msgBox('정보','감옥에서 막내 새별을 구출했습니다!\n새별의 전함이 함대에 합류합니다.');
+      case'heon':S.joined.heon=true;return msgBox('정보','감옥에서 막내 새별을 구출했습니다!\n새별의 전함이 '+joinBro('heon'));
       case'lover':S.lover=true;return msgBox('정보','형제는 없었지만 큰형 한울의 애인이 갇혀 있었습니다.\n그녀를 지구로 데려가 정보를 확인하십시오.');
-      case'ok':S.joined.ok=true;S.fleet.push(ship('ok'));return msgBox('정보','둘째 형 마루을 구출했습니다!\n마루의 전함이 함대에 합류합니다.');
+      case'ok':S.joined.ok=true;return msgBox('정보','둘째 형 마루를 구출했습니다!\n마루의 전함이 '+joinBro('ok'));
       default:{const m=1000+400*p.tier;S.money+=m;S.exp+=10;return msgBox('정보',`형제의 흔적은 없었습니다.\n버려진 창고에서 ${m}만원어치 물자와 적의 전술 기록(경험 +10)을 손에 넣었습니다.`)}
     }
   },
@@ -792,10 +810,10 @@ const CMD={
     if(S.loy>=100)return toast('충성도는 이미 최고입니다.');
     if(S.money<cost)return toast(`월급 ${cost}만원(1척당 20만원)이 부족합니다.`);
     S.money-=cost;S.loy=Math.min(100,S.loy+8);beep(700,.08);toast(`월급 지급 · 충성도 +8% · -${cost}만원`)},
-  async 5(){const p=here(),types=[...new Set(['fighter','scout',...PT[p.type].ship,'titan'])],lock=t=>SHIPTECH[t]&&!S.tech[SHIPTECH[t]];
-    for(;;){const i=await listBox('전함구입',types.map(t=>({ic:shipIc(t),label:SHOPN[t],sub:lock(t)?`기술 필요: ${TB[SHIPTECH[t]].n}`:`내구도 ${Math.round(TY[t].hp*hpMul())} · `+(SK[t]?`스킬 ${SK[t]}(${SKD[t]})`:TRD[t]?`특성 ${TRD[t]}(${SKD[t]})`:'스킬 없음'),right:TY[t].price+'만원',off:lock(t)||S.money<TY[t].price||!canAdd()})),
-        canAdd()?`자금 ${S.money}만원 · 함대 ${S.fleet.length}/${8-reserve()}척`:'형제들의 자리를 남겨 둬야 합니다 (최대 8척)');
-      if(i<0)return;const t=types[i];S.money-=TY[t].price;S.fleet.push(ship(t));ui();beep(600,.1);toast(`${SHOPN[t]} 합류`)}
+  async 5(){const p=here(),types=[...new Set(['fighter','scout',...PT[p.type].ship,'titan'])],lock=t=>SHIPTECH[t]&&!S.tech[SHIPTECH[t]],earth=p.role==='earth',room=()=>canAdd()||(earth&&S.hangar.length<8);
+    for(;;){const i=await listBox('전함구입',types.map(t=>({ic:shipIc(t),label:SHOPN[t],sub:lock(t)?`기술 필요: ${TB[SHIPTECH[t]].n}`:`내구도 ${Math.round(TY[t].hp*hpMul())} · `+(SK[t]?`스킬 ${SK[t]}(${SKD[t]})`:TRD[t]?`특성 ${TRD[t]}(${SKD[t]})`:'스킬 없음'),right:TY[t].price+'만원',off:lock(t)||S.money<TY[t].price||!room()})),
+        `자금 ${S.money}만원 · 함대 ${S.fleet.length}/8척`+(earth?` · 격납고 ${S.hangar.length}/8척`:'')+(canAdd()?'':earth?(room()?' · 새 전함은 격납고로 들어갑니다':' · 자리가 없습니다'):' · 함대가 가득 찼습니다'));
+      if(i<0)return;const t=types[i];S.money-=TY[t].price;const toH=!canAdd();(toH?S.hangar:S.fleet).push(ship(t));ui();beep(600,.1);toast(toH?`${SHOPN[t]} · 격납고에 보관`:`${SHOPN[t]} 합류`)}
   },
   async 6(){await gear('무기구입',W,WP,'w',k=>`공격력 ${WD[k]}`)},
   async 7(){await gear('보호구입',SH,SP,'sh',k=>`피해 ${Math.round((.2+.07*k)*100)}% 흡수`)},
@@ -984,12 +1002,12 @@ async function battle(E,o){
       if(c===0){auto=true;bb.innerHTML='<span>자동 전투 중…</span>'}
       else if(c===1){focus=await pickTarget();say(`${focus.n}에 화력을 집중한다!`)}
       else if(c===2){
-        if(S.joined.gu){say('한울는 이미 함대에 있다.');continue}
+        if(S.joined.gu){say('한울은 이미 함대에 있다.');continue}
         if(helped||B.A.length>=8){say('더 이상 도움을 받을 수 없다.');continue}
         helped=true;
         if(dE<=1||Math.random()<.15){const gs=ship('gu',Math.min(7,best('w')+1),Math.min(7,best('s')+1));
-          B.A.push(gs);place();say('큰형 한울가 도우러 왔다!');beep(880,.2)}
-        else say('한울는 너무 멀리 있어 올 수 없다...');
+          B.A.push(gs);place();say('큰형 한울이 도우러 왔다!');beep(880,.2)}
+        else say('한울은 너무 멀리 있어 올 수 없다...');
         bb.innerHTML='<span>자동 전투 중…</span>';await bs(800);auto=true;
       }else{
         if(o.noFlee){say('행성 전투에서는 퇴각할 수 없다!');continue}
@@ -1009,8 +1027,9 @@ async function battle(E,o){
   S.fleet=S.fleet.filter(alive);S.fleet.forEach(s=>{delete s.thin;delete s.wall;delete s.flash;delete s.dieAt;delete s.hitAt;delete s.actAt;delete s.blind});
   setMode('map');setMusic('map');B=null;ui();
   if(!S.fleet.some(s=>BRO.includes(s.t))){
-    await msgBox('게임 오버','하람과 형제들의 전함이 모두 격침되었습니다.\n별들은 블랙홀 군단의 손에 넘어갔습니다.','처음부터');
-    setState(newState());return'over'}
+    setMusic(null);await cine(gameover());setMusic('map');
+    await msgBox('게임 오버','하람과 형제들의 전함이 모두 격침되었습니다.\n별들은 블랙홀 군단의 손에 넘어갔습니다.','새 은하에서 다시');
+    setState(newState());save();await cine(opening());return'over'}
   if(res==='win'){
     let m=0;for(const e of E)m+=40+Math.round(e.max/2)+(e.w+1)*25;
     if(E[0].lone)m+=ri(800,1000);if(o.boss)m+=o.boss.tier*500;
@@ -1094,7 +1113,7 @@ function drawCine(t){const H=cv.height,sc=C.scenes[C.i],a=now()-C.t0;if(a>sc.dur
   g.font='12px "Do Hyeon",sans-serif';g.textAlign='right';g.fillStyle='#8a7f72';g.fillText('Enter·화면 누르기 다음  ·  Esc 건너뛰기',630,19);
   const f=Math.min(a/400,(sc.dur-a)/400);if(f<1){g.globalAlpha=1-Math.max(0,f);g.fillStyle='#000';g.fillRect(0,0,640,400);g.globalAlpha=1}
 }
-function bigText(s,y,al,size=54){g.globalAlpha=Math.max(0,Math.min(1,al));g.textAlign='center';g.font=size+'px "Do Hyeon",sans-serif';g.fillStyle='#6a2a40';g.fillText(s,323,y+3);g.fillStyle='#ffc857';g.fillText(s,320,y);g.globalAlpha=1}
+function bigText(s,y,al,size=54,col='#ffc857',sh='#6a2a40'){g.globalAlpha=Math.max(0,Math.min(1,al));g.textAlign='center';g.font=size+'px "Do Hyeon",sans-serif';g.fillStyle=sh;g.fillText(s,323,y+3);g.fillStyle=col;g.fillText(s,320,y);g.globalAlpha=1}
 function opening(){const cy=H=>(H-14)/2;
   return[
     {dur:5000,text:'고요하던 밤하늘에 낯선 빛이 번졌다.',draw(a,k,H){const r=4+k*46;g.fillStyle='#fff7d0';g.globalAlpha=.9;g.fillRect(450-r,118,r*2,3);g.fillRect(449,119-r,3,r*2);
@@ -1129,6 +1148,29 @@ function ending(){const hq=HQ(),own=PL.filter(owned),info=`${S.month}월 · 영�
         if(k*12>i){g.fillStyle='#ffc857';g.globalAlpha=.6+.4*Math.sin(t/200+i);g.fillRect(x-2,y-sz/2-8,4,4);g.globalAlpha=.25;g.beginPath();g.arc(x,y-sz/2-6,9,0,6.2832);g.fill();g.globalAlpha=1}});
       g.font='16px "Do Hyeon",sans-serif';g.textAlign='center';g.globalAlpha=Math.min(1,k*3);txt(info,320,52,'#d8cbb8');g.globalAlpha=1}},
     {dur:7000,text:'',draw(a,k,H){const y0=cy(H);bigText('진정한 평화여',y0,k*3,58);bigText('별빛 섬광',y0+56,(k-.3)*3,26)}}
+  ]}
+
+function gameover(){const hq=HQ(),info=`${S.month}월 · 영토 ${PL.filter(owned).length} · 기술 ${techCount()}/${TECH.length}`,cy=H=>(H-14)/2;
+  const bits=Array.from({length:26},()=>[rnd(-60,60),rnd(-16,16),rnd(0,1)]),cols=['#fff7b0','#ffb22e','#f2511b','#a3200e'];
+  return[
+    {dur:6500,text:'마지막 형제의 전함이 불꽃 속으로 사라졌다.',draw(a,k,H,t){const y0=cy(H),x=330-k*50,y=y0-20+k*k*70;
+      g.save();g.translate(x,y);g.rotate(k*.5);g.globalAlpha=1-Math.max(0,(k-.7)/.3);g.drawImage(sprite('sung'),-69,-27,138,54);g.restore();g.globalAlpha=1;
+      for(const b of bits){const ph=(k*3+b[2])%1,s=9*(1-ph)+2;g.globalAlpha=(1-ph)*(1-Math.max(0,(k-.8)*5));g.fillStyle=cols[Math.floor(ph*4)];
+        g.fillRect(x+b[0]*(.5+ph*.6)-s/2,y+b[1]-ph*46-s/2,s,s)}
+      g.globalAlpha=1;if(k<.12){g.globalAlpha=1-k/.12;g.fillStyle='#fff';g.fillRect(0,0,640,400);g.globalAlpha=1}}},
+    {dur:6500,text:'지키는 이 없는 지구 위로 블랙홀 군단의 그림자가 드리웠다.',draw(a,k,H,t){const y0=cy(H);
+      g.drawImage(planetCv(PL[0],24),320-60,y0-60,120,120);
+      g.globalAlpha=Math.min(.55,k*.7);g.fillStyle='#200818';g.beginPath();g.arc(320,y0,62,0,6.2832);g.fill();g.globalAlpha=1;
+      const d=260-k*130;spr('e:legion:b',320+d,y0-70,2.6,true,t);spr('e:legion:b',320+d+30,y0+50,2.6,true,t);spr('e:legion:s',320+d-40,y0-10,2,true,t);
+      spr('e:legion:b',320-d,y0-30,2.6,false,t);spr('e:legion:s',320-d+40,y0+60,2,false,t);spr('e:legion:s',320-d+20,y0-84,2,false,t)}},
+    {dur:6500,text:'별들의 등불이 하나씩 꺼졌다.',draw(a,k,H,t){const y0=cy(H);g.drawImage(planetCv(PL[0],24),320-36,y0-36,72,72);
+      PL.slice(1).forEach((p,i)=>{const an=i*.628-1.2,rx=150+((i%3)*46),x=320+Math.cos(an)*rx,y=y0+Math.sin(an)*(70+(i%2)*26),sz=p.type==='hole'?40:24+p.size*6;
+        g.drawImage(planetCv(p,12),x-sz/2,y-sz/2,sz,sz);
+        const off=k*12>i;if(p.type!=='hole'){if(!off){g.fillStyle='#ffc857';g.globalAlpha=.6+.4*Math.sin(t/200+i);g.fillRect(x-2,y-sz/2-8,4,4);g.globalAlpha=1}
+          else{g.globalAlpha=Math.min(.7,(k*12-i)*.5);g.fillStyle='#04030a';g.beginPath();g.arc(x,y,sz/2+1,0,6.2832);g.fill();g.globalAlpha=1}}});
+      g.globalAlpha=Math.min(.6,k*.8);g.fillStyle='#04030a';g.beginPath();g.arc(320,y0,38,0,6.2832);g.fill();g.globalAlpha=1;
+      g.font='16px "Do Hyeon",sans-serif';g.textAlign='center';g.globalAlpha=Math.min(1,k*3);txt(info,320,52,'#a2968a');g.globalAlpha=1}},
+    {dur:7000,text:'',draw(a,k,H){const y0=cy(H);bigText('별빛이 스러지다',y0,k*3,56,'#c9c0b4','#3a1420');bigText('게임 오버',y0+52,(k-.3)*3,24,'#ff8a7a','#3a1420')}}
   ]}
 
 /* ---------- loop and input ---------- */
@@ -1181,9 +1223,10 @@ function sanitize(o){
   if(!pl[0].col)pl[0].col={loy:100,tax:1,fac:['yard','arsenal','lab'],rebel:false};pl[0].col.rebel=false;
   const ids=pl.map(p=>p.id),conq=flags(o.conq,k=>ids.includes(k)&&k!=='p0');
   for(const p of pl.slice(1)){if(conq[p.id]&&!p.col)p.col={loy:45,tax:1,fac:[],rebel:false};if(!conq[p.id])delete p.col}
-  const fleet=o.fleet.slice(0,8).filter(s=>s&&TY[s.t]).map(s=>{const max=num(s.max,1,999,TY[s.t].hp);
+  const ships=(a,n)=>(Array.isArray(a)?a:[]).slice(0,n).filter(s=>s&&TY[s.t]).map(s=>{const max=num(s.max,1,999,TY[s.t].hp);
     const r={t:s.t,n:TY[s.t].n,max,hp:num(s.hp,1,max,max),w:num(s.w,-1,7,-1),sh:num(s.sh,-1,7,-1)};
     if(typeof s.tint==='string'&&/^#[0-9a-f]{3,6}$/i.test(s.tint))r.tint=s.tint;return r});
+  const fleet=ships(o.fleet,8),hangar=ships(o.hangar,11);
   if(!fleet.some(s=>BRO.includes(s.t)))return null;
   const cell=k=>/^\d{1,2},\d{1,2}$/.test(k),tiles={};
   if(o.tiles&&typeof o.tiles==='object')for(const k of Object.keys(o.tiles).slice(0,80))if(cell(k)&&(o.tiles[k]==='a'||o.tiles[k]==='n'))tiles[k]=o.tiles[k];
@@ -1191,7 +1234,7 @@ function sanitize(o){
   const tech=flags(o.tech,k=>!!TB[k]);tech.w0=true;const prog={};
   if(o.prog&&typeof o.prog==='object')for(const k of Object.keys(o.prog))if(TB[k]&&!tech[k])prog[k]=num(o.prog[k],0,100,0);
   return{v:2,x:num(o.x,0,COLS-1,pl[0].x),y:num(o.y,0,ROWS-1,pl[0].y),money:num(o.money,0,9999999,0),exp:num(o.exp,0,99999,0),
-    loy:num(o.loy,0,100,80),moves:num(o.moves,0,1e9,0),month:num(o.month,1,99999,1),tech,prog,rsch:TB[o.rsch]&&!tech[o.rsch]?o.rsch:null,fleet,pl,tiles,worm,
+    loy:num(o.loy,0,100,80),moves:num(o.moves,0,1e9,0),month:num(o.month,1,99999,1),tech,prog,rsch:TB[o.rsch]&&!tech[o.rsch]?o.rsch:null,fleet,hangar,pl,tiles,worm,
     conq,info:flags(o.info,k=>ids.includes(k)),guard:flags(o.guard,cell),joined:flags(o.joined,k=>['gu','ok','heon'].includes(k)),lover:!!o.lover}}
 function textBox(title,text,value){return new Promise(res=>{
   openDlg(`<div class="win"><h2>${title}</h2><div class="body"><div class="txt">${text}</div><textarea id="saveText" readonly></textarea></div><div class="foot"><button data-i="1">복사</button><button data-i="0"><kbd>↵</kbd>닫기</button></div></div>`);
