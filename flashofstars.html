@@ -171,7 +171,7 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
 <main class="wrap">
   <header class="top">
     <h1>별빛 섬광</h1>
-    <p id="ver">v0.35</p>
+    <p id="ver">v0.36</p>
   </header>
 
   <div class="stage" id="stage">
@@ -226,7 +226,7 @@ function shade(hex,f){const n=parseInt(hex.slice(1),16),c=v=>Math.max(0,Math.min
 /* ---------- data ---------- */
 const W=['레이저','빔','사각빔','연발빔','레이저포','죽연발포','화염포','파동포'];
 const WP=[50,100,200,400,700,1100,1600,2200];
-const WD=[12,18,27,37,49,62,76,92].map(v=>Math.round(v*1.1));
+const WD=[12,18,27,37,49,62,76,92].map(v=>Math.round(v*1.21));
 const SH=['화염바람','자기바람','전자바람','화자폭풍','화전폭풍','자전폭풍','합성전자','중성전자'];
 const SP=[100,200,300,500,700,1000,1200,1600];
 const BRO=['sung','gu','ok','heon'];
@@ -249,7 +249,7 @@ const SK={sung:'집중 포격',gu:'전탄 발사',ok:'긴급 수리',heon:'보�
 const TRD={scout:'회피',mirage:'회피',spore:'매 턴 재생'};
 const tr=(s,k)=>s[k]||(TY[s.t]&&TY[s.t][k])||0;
 const SHIPTECH={cruiser:'h0',sphere:'h0',tide:'h0',cyl:'h1',frost:'h1',bird:'h1',mirage:'h1',boulder:'h1',spore:'h1',storm:'h1',green:'h2',steel:'h2',glacier:'h2',ember:'h2',bastion:'h2',titan:'h3'};
-const SKD={sung:'힘을 모아 강한 적 1기에 최종 피해의 3배 · 보호막 10% 무시',gu:'적 전체 큰 피해',ok:'아군 전체 회복·상태 해제',heon:'아군 전체 1회 방어',
+const SKD={sung:'힘을 모아 강한 적 1기에 최종 피해의 4배 · 보호막 10% 무시',gu:'적 전체 큰 피해',ok:'아군 전체 회복·상태 해제',heon:'아군 전체 1회 방어',
   cruiser:'적 전체 피해·20% 기절',cyl:'아군 전체 회복',sphere:'아군 전체 흡수막',bird:'적 전체 관통 피해 ×2·화상',green:'강한 적 2기 내구도 절반',frost:'적 전체 실명',
   steel:'적 전체 피해 ×2',titan:'적 전체 큰 피해',raider:'적 1기 큰 피해·자금 약탈',tide:'가장 약한 아군 크게 회복',pirate:'아군 전체 공격력 +30% (3턴)',fighter:'아군 전체 받는 피해 -25% (3턴)',efighter:'아군 전체 명중 +15%·치명타 20% (3턴)',storm:'적 전체 관통 피해·30% 기절',
   glacier:'아군 전체 1회 방어·상태 해제',ember:'적 전체 피해·화상',bastion:'아군 전체 큰 흡수막',scout:'강한 적에게 표적(받는 피해 +50%)',
@@ -367,7 +367,7 @@ function load(){try{return sanitize(JSON.parse(localStorage.getItem(KEY)))}catch
 let snd=true,bgm=true,spd=1;
 try{const o=JSON.parse(localStorage.getItem(SETKEY));if(o){snd=o.snd!==false;bgm=o.bgm!==false;spd=o.spd===2?2:1}}catch(e){}
 function saveSet(){try{localStorage.setItem(SETKEY,JSON.stringify({snd,bgm,spd}))}catch(e){}}
-const wn=s=>s.w>=0?W[s.w]:'기본포', sn=s=>s.sh>=0?SH[s.sh]:'보호막 없음', wd=s=>s.w>=0?WD[s.w]:11;
+const wn=s=>s.w>=0?W[s.w]:'기본포', sn=s=>s.sh>=0?SH[s.sh]:'보호막 없음', wd=s=>s.w>=0?WD[s.w]:12;
 const canAdd=()=>S.fleet.length<8;
 /* a rescued brother joins the fleet, or waits in the Earth hangar when the fleet is full */
 function joinBro(t){const s=ship(t);if(canAdd()){S.fleet.push(s);return'함대에 합류합니다.'}S.hangar.push(s);return'함대가 가득 차 지구 격납고에서 기다립니다.'}
@@ -650,7 +650,7 @@ function drawMap(t){
     const[rx,ry]=cxy(r.vx,r.vy),tp=r.tg==='planet'?PL.find(p=>p.id===r.pid):null,T=tp||{x:S.x,y:S.y},[tx,ty]=cxy(T.x,T.y);
     g.strokeStyle='#ff4d3b';g.globalAlpha=.35;g.setLineDash([2,4]);g.lineDashOffset=-t/60;g.beginPath();g.moveTo(rx,ry);g.lineTo(tx,ty);g.stroke();g.setLineDash([]);
     g.globalAlpha=.5+.4*Math.sin(t/200);g.beginPath();g.arc(rx,ry,11,0,6.2832);g.stroke();g.globalAlpha=1;
-    g.save();g.translate(rx,ry);if(T.x<r.x)g.scale(-1,1);g.drawImage(sprite(`e:${r.fac}:s`),-12,-5,24,10);g.restore();
+    g.save();g.translate(rx,ry);if(T.x<r.x)g.scale(-1,1);{const ri2=sprite(`e:${r.fac}:s`);g.drawImage(ri2,-12+Math.round(ri2.off*24/46),-5,24,10)};g.restore();
     g.font='14px "Do Hyeon",sans-serif';if(Math.floor(t/300)%2)txt('!',rx,ry-9,'#ff4d3b');g.font='11px "Do Hyeon",sans-serif'}
   if(Math.abs(S.x-V.x)+Math.abs(S.y-V.y)>2.5){V.x=S.x;V.y=S.y}
   V.x+=(S.x-V.x)*.28;V.y+=(S.y-V.y)*.28;
@@ -662,7 +662,7 @@ function drawMap(t){
   g.globalAlpha=1;
   const im=sprite('sung');g.save();g.translate(Math.round(cx),Math.round(cy));if(V.face<0)g.scale(-1,1);
   g.fillStyle=Math.floor(t/90)%2?'#6cf':'#fff';g.fillRect(-15,-1,3,2);
-  g.drawImage(im,-12,-5,24,10);g.restore();
+  g.drawImage(im,-12+Math.round(im.off*24/46),-5,24,10);g.restore();
   const bob=Math.round(Math.sin(t/250)*1.5),mx=Math.round(cx),my=Math.round(cy);g.fillStyle='#ffc857';
   g.fillRect(mx-3,my-13+bob,7,2);g.fillRect(mx-2,my-11+bob,5,1);g.fillRect(mx-1,my-10+bob,3,1);g.fillRect(mx,my-9+bob,1,1);
   if(hover&&mode==='map'&&dlg.hidden&&hover.x<420&&hover.y<310){
@@ -710,7 +710,7 @@ function cmds(){const p=here(),c={};
     if(f('lab'))c[3]={l:'개발'};
     if(f('arsenal')){c[6]={l:'무기구입'};c[7]={l:'보호구입'}}
     c[9]={l:'내정'}}
-  c[4]={l:'월급',c:S.loy<100?20*S.fleet.length+'만':''};c[8]={l:'함대'};c[10]={l:'제국'};return c}
+  c[4]={l:'월급',c:S.loy<100?20*(S.fleet.length+S.hangar.length)+'만':''};c[8]={l:'함대'};c[10]={l:'제국'};return c}
 
 /* ---------- dialogs ---------- */
 function openDlg(html,cls){dlg.className='dlg'+(cls?' '+cls:'');dlg.innerHTML=html;dlg.hidden=false}
@@ -822,7 +822,7 @@ async function hangar(){
       {label:'함선 맡기기',sub:full?'격납고가 가득 찼습니다':'함대의 전함을 격납고로',off:full||!S.fleet.some(canStore)},
       {label:'함선 꺼내기',sub:!S.hangar.length?'보관 중인 전함이 없습니다':S.fleet.length>=8?'함대가 가득 찼습니다':'격납고의 전함을 함대로',off:!S.hangar.length||S.fleet.length>=8},
       {label:'보관 중인 전함 보기',off:!S.hangar.length}],`함대 ${S.fleet.length}/8척 · 격납고 ${S.hangar.length}/8척`,
-      '지구 격납고에는 전함을 8척까지 보관할 수 있습니다.\n보관한 전함은 월급이 들지 않고 전투에도 나가지 않습니다. 함대에는 형제의 전함이 한 척은 남아 있어야 합니다.');
+      '지구 격납고에는 전함을 8척까지 보관할 수 있습니다.\n보관한 전함도 월급은 받지만 전투에는 나가지 않고, 충성도가 낮아도 떠나지 않습니다. 함대에는 형제의 전함이 한 척은 남아 있어야 합니다.');
     if(i<0)return;
     if(i===0){for(;;){if(S.hangar.length>=8)break;const k=await fleetBox(`격납고에 맡길 전함을 고르세요 (보관 ${S.hangar.length}/8)`,canStore);if(k<0)break;
       S.hangar.push(S.fleet.splice(k,1)[0]);ui();beep(520)}}
@@ -884,7 +884,7 @@ const CMD={
     }
   },
   async 3(){await techBox()},
-  async 4(){const cost=20*S.fleet.length;
+  async 4(){const cost=20*(S.fleet.length+S.hangar.length);
     if(S.loy>=100)return toast('충성도는 이미 최고입니다.');
     if(S.money<cost)return toast(`월급 ${cost}만원(1척당 20만원)이 부족합니다.`);
     S.money-=cost;S.loy=Math.min(100,S.loy+8);beep(700,.08);toast(`월급 지급 · 충성도 +8% · -${cost}만원`)},
@@ -1129,7 +1129,7 @@ async function act(s,foes,friends,focus,d){
     switch(sk){
       case'sung':{const t2=top();await chargeBeam(s,t2,'#ffc857');
         if(t2.hp>0){let v=wd(s)*rnd(.8,1.2)*(s.atk?1.3:1);if(s.w===4&&Math.random()<.2){v*=1.8;fl(s,'치명타','#ffcc55')}else if(S.tech.t1&&Math.random()<.1){v*=1.5;fl(s,'치명타','#ffcc55')}
-          hit(t2,v*3,.1,s);if(s.w===6&&t2.hp>0&&Math.random()<.35)afflict(t2,'burn',3,'화상','#ff9955')}break}
+          hit(t2,v*4,.1,s);if(s.w===6&&t2.hp>0&&Math.random()<.35)afflict(t2,'burn',3,'화상','#ff9955')}break}
       case'gu':await orbCast(s,lf,'#ff9030');for(const e of lf)hit(e,ri(35,40),false,s);break;
       case'ok':cleanse(fr);heal(30);break;
       case'heon':case'barrier':guard('#77ddff',f=>f.thin=true);break;
