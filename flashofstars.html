@@ -197,7 +197,7 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
 <main class="wrap">
   <header class="top">
     <h1>별빛 섬광</h1>
-    <p id="ver">v0.48</p>
+    <p id="ver">v0.49</p>
   </header>
 
   <div class="stage" id="stage">
@@ -1265,9 +1265,9 @@ async function step(nx,ny){
   const tile=S.tiles[key];if(tile==='n')return;
   const enc=(tile==='a'?.5:.27)*(S.tech.e3?.75:1),roll=Math.random();
   if(roll<enc){await sleep(160);await battle(gen(nx,ny),{})}
-  else if(roll<enc+.03&&canAdd()){const s=ship('fighter');s.hp=1;S.fleet.push(s);beep(760,.15);
+  else if(roll<enc+.015&&canAdd()){const s=ship('fighter');s.hp=1;S.fleet.push(s);beep(760,.15);
     await msgBox('버려진 전함','우주를 떠돌던 고물 전함을 발견해 함대에 넣었습니다.\n내구도가 1뿐이니 서둘러 조선소에서 수리하십시오.')}
-  else if(roll<enc+.05&&canAdd()){
+  else if(roll<enc+.025&&canAdd()){
     const c=await listBox('투항 신호',[{label:'받아들인다'}],'',`적 전투기 한 대가 투항을 요청했습니다.\n받아들이면 추격대와 전투가 벌어집니다.`);
     if(c===0){const r=await battle(gen(nx,ny),{intro:'추격대가 나타났다!'});
       if(S===world&&r==='win'&&canAdd()){const r2=Math.random();S.fleet.push(ship('efighter',ri(1,3),r2<.15?3:r2<.5?0:-1));
