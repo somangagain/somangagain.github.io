@@ -197,7 +197,7 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
 <main class="wrap">
   <header class="top">
     <h1>별빛 섬광</h1>
-    <p id="ver">v0.46</p>
+    <p id="ver">v0.48</p>
   </header>
 
   <div class="stage" id="stage">
@@ -1521,7 +1521,7 @@ async function battle(E,o){
     setState(newState());save();await cine(opening());return'over'}
   if(res==='win'){
     let m=0;for(const e of allE)m+=40+Math.round((e.base||e.max)/2)+(e.w+1)*25+(e.elite?(S.tech.k2?240:120):0);
-    if(E[0].lone)m+=ri(800,1000);if(o.boss)m+=o.boss.tier*500;m=Math.round(m*.45*1.3*1.1*1.1*(S.tech.f4?1.15:1));
+    if(E[0].lone)m+=ri(800,1000);if(o.boss)m+=o.boss.tier*500;m=Math.round(m*.45*1.3*1.1*1.1*.8*(S.tech.f4?1.15:1)*(o.boss&&o.noFlee?.9:1));
     const x=allE.length+(o.boss?15:0)+2*allE.filter(e=>e.elite).length+5*allE.filter(e=>e.chief).length;S.money+=m;S.exp+=x;S.loy=Math.max(0,S.loy-2);
     let txt=`자금 +${m}만원\n경험 +${x}`;if(lost)txt+=`\n아군 ${lost}척 격침`;
     const prom=[];for(const s of S.fleet){const r0=rankOf(s);s.xp=(s.xp||0)+(o.boss?3:2);const r1=rankOf(s);if(r1>r0){s.max+=8*(r1-r0);s.hp=Math.min(s.max,s.hp+8*(r1-r0));prom.push(`${s.n} ${RK[r1]} 진급! (${r1-r0>1?(r1-r0)+'계급 · ':''}${RKB}${r1-r0>1?' ×'+(r1-r0):''})\n   현재 누적: ${rkSum(r1)} · 최대 내구도 ${s.max}`)}}
