@@ -1,8 +1,9 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>별빛 섬광</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap">
 <style>
-/* layout: one 640x400 DOS screen in a dark bezel, touch deck beneath; under 600px the panels unstack below the map */
+/* layout: one 640x400 DOS screen in a dark bezel with a slim control bar beneath; under 600px the panels unstack below the map, and touch screens get a d-pad over the map */
 :root{
   --desk:#0b0908; --bezel:#1a1512; --space:#07060f; --olive:#2a2420; --olive-hi:#8a6f4e; --olive-lo:#14100d; --olive-ink:#d8cbb8;
   --brown:#3a2c22; --brown-hi:#a07a52; --brown-lo:#1a120c; --brown-ink:#f3e8d8; --yellow:#ffc857; --leaf:#ffb38a;
@@ -91,6 +92,8 @@ kbd{font:inherit;color:var(--yellow);border:1px solid currentColor;padding:0 .28
 #bSpd{color:var(--yellow);white-space:nowrap}
 #bMenu{position:absolute;left:calc(4*var(--u));top:calc(4*var(--u));z-index:3;font:inherit;font-size:calc(20*var(--u));line-height:1;padding:calc(2*var(--u)) calc(7*var(--u));background:rgba(10,8,20,.65);color:#f1ead6;border:1px solid rgba(241,234,214,.35);border-radius:3px;cursor:pointer}
 #bMenu:hover{color:var(--yellow)}
+#bSkip{position:absolute;right:calc(6*var(--u));top:calc(4*var(--u));z-index:3;font-size:max(12px,calc(15*var(--u)));padding:calc(3*var(--u)) calc(10*var(--u));background:rgba(10,8,20,.7);color:#f1ead6;border:1px solid rgba(241,234,214,.35);border-radius:3px}
+#bSkip:hover{color:var(--yellow)}
 #bMenu[hidden]{display:none}
 .compact #bMenu{font-size:16px;padding:2px 8px}
 
@@ -182,22 +185,58 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
 .compact .card{font-size:11px}
 .compact .card small{font-size:10px}
 
-.deck{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center}
-.dpad{display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px);gap:4px}
-.dpad button{border:1px solid var(--line);background:#1c1714;color:var(--olive-ink);font-size:20px;border-radius:4px}
-.dpad button:active{background:var(--olive)}
-.side{flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px}
-.side p{margin:0;color:var(--muted);font-size:16px;line-height:1.5}
-.side .row{display:flex;flex-wrap:wrap;gap:8px}
-.side .row button{border:1px solid var(--line);padding:6px 14px;color:var(--olive-ink);font-size:16px;border-radius:4px}
-.side .row button:hover{color:var(--yellow)}
+.deck{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:#120e0c}
+.keys{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;color:var(--muted);font-size:15px}
+.keys span{display:inline-flex;align-items:center;gap:4px}
+.keys .tc{display:none}
+.k{font-weight:400;color:var(--yellow);border:1px solid #4a3e34;border-radius:3px;padding:0 6px;font-size:13px;line-height:1.5;background:#1c1714}
+.deck .row{display:flex;gap:8px;margin-left:auto}
+.deck .row button{border:1px solid var(--line);padding:6px 14px;color:var(--olive-ink);font-size:16px;border-radius:4px;background:#1c1714}
+.deck .row button:hover{color:var(--yellow)}
+/* touch d-pad floats over the map's lower-right corner, only on touch screens */
+.tpad{display:none;position:absolute;z-index:3;grid-template-columns:repeat(3,var(--b));grid-template-rows:repeat(3,var(--b));gap:3px;--b:clamp(38px,6cqw,46px);
+  left:calc(65.625cqw - 3*var(--b) - 14px);top:calc(48.44cqw - 3*var(--b) - 14px)}
+.tpad button{background:rgba(14,10,8,.45);border:1px solid rgba(241,234,214,.3);color:#f1ead6;border-radius:8px;font-size:calc(var(--b)*.42);display:flex;align-items:center;justify-content:center}
+.tpad button:active{background:rgba(255,200,87,.45)}
+#pU{grid-area:1/2}#pL{grid-area:2/1}#pR{grid-area:2/3}#pD{grid-area:3/2}
+.tpad[hidden]{display:none!important}
+.compact .tpad{left:auto;right:10px;top:calc(73.8cqw - 3*var(--b) - 10px)}
+.screen{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+button,canvas{touch-action:manipulation}
+@media (pointer:coarse){
+  .tpad{display:grid}
+  .keys .kb{display:none}.keys .tc{display:inline-flex}
+  .compact .cmd button{min-height:46px;font-size:16px}
+  .compact #bbtns button{min-height:44px;padding:0 6px}
+  .compact .win .list button{min-height:44px}
+  .compact .win .foot button{min-height:40px}
+  .compact #bSpd{min-height:40px}
+  [data-key]:hover::after{display:none}
+}
+@media (orientation:landscape) and (max-height:520px){
+  body{padding:6px 10px}
+  .top{display:none}
+  .wrap{max-width:calc((100svh - 62px)*1.6);gap:6px}
+  .deck{padding:4px 8px}.keys{display:none}
+  .deck .row button{padding:4px 12px;font-size:14px}
+  .tpad{--b:34px}
+}
+.compact .stat .loc span{white-space:nowrap}
+.compact .stat .loc{flex-wrap:wrap;row-gap:2px}
+@media (max-width:600px){
+  body{padding-inline:8px;padding-block:10px 20px}
+  .top h1{font-size:24px}
+  .deck{padding:8px 10px}
+  .keys{font-size:13px}
+  .deck .row button{padding:8px 12px}
+}
 @media (prefers-reduced-motion:reduce){.cmd .dot,.stat dd.chg{animation:none}}
 </style>
 
 <main class="wrap">
   <header class="top">
     <h1>별빛 섬광</h1>
-    <p id="ver">v0.49</p>
+    <p id="ver">v0.51</p>
   </header>
 
   <div class="stage" id="stage">
@@ -210,24 +249,27 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
         <div class="brow"><div id="bbtns"></div><button id="bSpd" title="전투 속도">1배속</button></div>
       </div>
       <button id="bMenu" aria-label="메뉴">≡</button>
+      <button id="bSkip" data-key="Esc" hidden>건너뛰기 ▶▶</button>
+      <div class="tpad" id="tpad" aria-label="이동">
+        <button id="pU" aria-label="위">▲</button><button id="pL" aria-label="왼쪽">◀</button><button id="pR" aria-label="오른쪽">▶</button><button id="pD" aria-label="아래">▼</button>
+      </div>
       <div id="toast" role="status"></div>
       <section class="dlg" id="dlg" hidden></section>
     </div>
   </div>
 
   <div class="deck">
-    <div class="dpad" aria-label="이동">
-      <span></span><button id="pU" aria-label="위">▲</button><span></span>
-      <button id="pL" aria-label="왼쪽">◀</button><span></span><button id="pR" aria-label="오른쪽">▶</button>
-      <span></span><button id="pD" aria-label="아래">▼</button><span></span>
-    </div>
-    <div class="side">
-      <p>방향키나 WASD로 함대를 움직이고 숫자키로 명령을 내립니다. 지도를 눌러도 한 칸씩 이동합니다. Esc나 화면 왼쪽 위 ≡ 버튼으로 메뉴를 열어 저장·불러오기·설정을 바꿀 수 있습니다.</p>
-      <div class="row">
-        <button id="bMenu2" data-key="Esc">메뉴</button>
-        <button id="bFull">전체 화면</button>
-        <input type="file" id="fLoad" accept=".json,application/json" hidden>
-      </div>
+    <p class="keys">
+      <span class="kb"><b class="k">WASD</b><b class="k">↑↓←→</b>이동</span>
+      <span class="kb"><b class="k">1–0</b>명령</span>
+      <span class="kb"><b class="k">Esc</b>메뉴</span>
+      <span class="kb">지도를 클릭해도 한 칸씩 이동</span>
+      <span class="tc">지도를 누르거나 밀어서 이동 · 화면 아래 버튼으로 명령</span>
+    </p>
+    <div class="row">
+      <button id="bMenu2" data-key="Esc">메뉴</button>
+      <button id="bFull">전체 화면</button>
+      <input type="file" id="fLoad" accept=".json,application/json" hidden>
     </div>
   </div>
 </main>
@@ -792,11 +834,15 @@ const shipIc=t=>sicache[t]||(sicache[t]=`<img class="sic" alt="" src="${sprite(t
 
 /* ---------- layout ---------- */
 const mq=matchMedia('(max-width:600px)');
+/* the canvas keeps a 640x400 logical space but is backed at the displayed resolution, so text and lines stay sharp when the screen is enlarged */
+let LW=640,LH=400,K=1;
 function fit(){const c=mq.matches,w=c&&mode==='map'?420:640,h=c?(mode==='map'?310:336):400;
-  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;g.imageSmoothingEnabled=false}
-  scr.classList.toggle('compact',c)}
+  scr.classList.toggle('compact',c);
+  const r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1,k=clamp(Math.ceil((r.width||w)*dpr/w-.05),1,5);
+  if(LW!==w||LH!==h||K!==k||cv.width!==w*k||cv.height!==h*k){LW=w;LH=h;K=k;cv.width=w*k;cv.height=h*k;g.imageSmoothingEnabled=false}}
+window.addEventListener('resize',fit);document.addEventListener('fullscreenchange',()=>setTimeout(fit,60));
 mq.addEventListener('change',fit);
-function setMode(m0){const bm=$('bMenu');if(bm)bm.hidden=m0!=='map';return setMode0(m0)}
+function setMode(m0){const sk=$('bSkip');if(sk)sk.hidden=m0!=='cine';const bm=$('bMenu');if(bm)bm.hidden=m0!=='map';const tp=$('tpad');if(tp)tp.hidden=m0!=='map';return setMode0(m0)}
 function setMode0(m){mode=m;const b=m!=='map';stat.hidden=b;cmd.hidden=b;bbar.hidden=m!=='battle';fit()}
 let toastT=0;
 function toast(t){toastEl.textContent=t;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('on'),2000)}
@@ -1664,14 +1710,14 @@ function cine(scenes){return new Promise(res=>{setMode('cine');C={scenes,i:0,t0:
 function spr(type,x,y,sc,flip,t,tint){const im=sprite(type,tint),w=46*sc,h=18*sc;g.save();g.translate(Math.round(x),Math.round(y));if(flip)g.scale(-1,1);g.translate(im.off*sc,0);
   if(im.flame){const f=(2+(Math.floor(t/70)%3))*sc;g.fillStyle=im.flame;g.fillRect(-w/2+im.rear*sc-f,-1.2*sc,f,2.4*sc)}
   g.drawImage(im,-w/2,-h/2,w,h);g.restore()}
-function drawCine(t){const H=cv.height,sc=C.scenes[C.i],a=now()-C.t0;if(a>sc.dur){cineNext();return}
+function drawCine(t){const H=LH,sc=C.scenes[C.i],a=now()-C.t0;if(a>sc.dur){cineNext();return}
   const k=a/sc.dur;g.fillStyle='#04030a';g.fillRect(0,0,640,400);
   g.drawImage(nebBat,0,0,640,400);
   for(const s of stars){g.fillStyle=s[2]>1?'#fff':'#9aa0c8';g.fillRect(Math.round(((s[0]-t*s[3]/2500)%640+640)%640),s[1],s[2],s[2])}
   sc.draw(a,k,H,t);
   g.fillStyle='#000';g.fillRect(0,0,640,30);g.fillRect(0,H-44,640,44);
   g.textAlign='center';g.font='20px "Do Hyeon",sans-serif';g.globalAlpha=Math.min(1,a/700,(sc.dur-a)/500);txt(sc.text||'',320,H-16,'#f5eee2');g.globalAlpha=1;
-  g.font='12px "Do Hyeon",sans-serif';g.textAlign='right';g.fillStyle='#8a7f72';g.fillText('Enter·화면 누르기 다음  ·  Esc 건너뛰기',630,19);
+  g.font='12px "Do Hyeon",sans-serif';g.textAlign='right';g.fillStyle='#8a7f72';g.fillText('Enter·화면 누르기 다음',560,19);
   const f=Math.min(a/400,(sc.dur-a)/400);if(f<1){g.globalAlpha=1-Math.max(0,f);g.fillStyle='#000';g.fillRect(0,0,640,400);g.globalAlpha=1}
 }
 function bigText(s,y,al,size=54,col='#ffc857',sh='#6a2a40'){g.globalAlpha=Math.max(0,Math.min(1,al));g.textAlign='center';g.font=size+'px "Do Hyeon",sans-serif';g.fillStyle=sh;g.fillText(s,323,y+3);g.fillStyle=col;g.fillText(s,320,y);g.globalAlpha=1}
@@ -1735,7 +1781,7 @@ function gameover(){const hq=HQ(),info=`${S.month}개월 · 영토 ${PL.filter(o
   ]}
 
 /* ---------- loop and input ---------- */
-function frame(t){if(C)drawCine(t);else if(mode==='battle'&&B)drawBattle(t);else drawMap(t);requestAnimationFrame(frame)}
+function frame(t){g.setTransform(K,0,0,K,0,0);g.imageSmoothingEnabled=false;if(C)drawCine(t);else if(mode==='battle'&&B)drawBattle(t);else drawMap(t);requestAnimationFrame(frame)}
 function setSpd(v){spd=v;$('bSpd').innerHTML=fic('speed')+spd+'배속';saveSet()}
 document.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey)return;const k=e.key;
@@ -1748,11 +1794,15 @@ document.addEventListener('keydown',e=>{
   else if(k==='F1'){e.preventDefault();help()}
   else if(k==='Escape'){e.preventDefault();sysMenu()}
 });
-const cpos=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height}};
+const cpos=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*LW/r.width,y:(e.clientY-r.top)*LH/r.height}};
 cmd.addEventListener('click',e=>{const b=e.target.closest('button[data-n]');if(b)run(+b.dataset.n)});
 cv.addEventListener('mousemove',e=>{hover=cpos(e)});
 cv.addEventListener('mouseleave',()=>{hover=null});
-cv.addEventListener('click',e=>{const{x,y}=cpos(e);
+let sw=null,swUsed=0;
+cv.addEventListener('touchstart',e=>{const t=e.touches[0];sw=e.touches.length===1?{x:t.clientX,y:t.clientY}:null},{passive:true});
+cv.addEventListener('touchend',e=>{if(!sw)return;const t=e.changedTouches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y;sw=null;
+  if(Math.max(Math.abs(dx),Math.abs(dy))>28&&mode==='map'&&!C){swUsed=now();e.preventDefault();if(Math.abs(dx)>=Math.abs(dy))move(Math.sign(dx),0);else move(0,Math.sign(dy))}});
+cv.addEventListener('click',e=>{if(now()-swUsed<400)return;const{x,y}=cpos(e);
   if(mode==='cine'){cineNext();return}
   if(mode==='battle'){if(targetFn)targetFn(x,y);return}
   if(x>=420||y>=310)return;
@@ -1790,6 +1840,7 @@ async function sysMenu(){if(busy||mode!=='map')return;busy=true;sfx.click();
       if(k===0){setState(newState());save();await cine(opening());break}continue}}
   }finally{busy=false;ui()}}
 $('bMenu').addEventListener('click',sysMenu);
+$('bSkip').addEventListener('click',e=>{e.stopPropagation();if(C){C.i=C.scenes.length;cineNext()}});
 $('bMenu2').addEventListener('click',sysMenu);
 
 /* ---------- save files ---------- */
