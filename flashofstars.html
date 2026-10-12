@@ -236,7 +236,7 @@ button,canvas{touch-action:manipulation}
 <main class="wrap">
   <header class="top">
     <h1>별빛 섬광</h1>
-    <p id="ver">v0.51</p>
+    <p id="ver">v0.52</p>
   </header>
 
   <div class="stage" id="stage">
@@ -870,10 +870,7 @@ function drawMap(t){
     if(!mine){g.globalAlpha=.3;g.setLineDash([3,3]);g.beginPath();g.arc(cx,cy,2.5*CELL,0,6.2832);g.stroke();g.setLineDash([])}
     g.globalAlpha=1}
   const hq=HQ();
-  if(hq&&!owned(hq))for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const x=hq.x+dx,y=hq.y+dy;
-    if((dx||dy)&&x>=0&&y>=0&&x<COLS&&y<ROWS&&!S.guard[x+','+y]){const[cx,cy]=cxy(x,y);g.fillStyle=Math.floor(t/400)%2?'#ff4d3b':'#a02010';
-      for(let k=-3;k<=3;k++){g.fillRect(cx+k,cy+k,2,2);g.fillRect(cx+k,cy-k,2,2)}}}
-  for(const p of PL)if(!owned(p)&&p.role!=='hq')for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const x=p.x+dx,y=p.y+dy;
+  for(const p of PL)if(!owned(p))for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const x=p.x+dx,y=p.y+dy;
     if((dx||dy)&&x>=0&&y>=0&&x<COLS&&y<ROWS&&!S.guard[x+','+y]&&!PL.some(q=>q.x===x&&q.y===y)){const[cx,cy]=cxy(x,y);g.fillStyle=FA[p.fac].c;g.globalAlpha=.45+.25*Math.sin(t/400+x+y);
       g.fillRect(cx-1,cy-3,2,6);g.fillRect(cx-3,cy-1,6,2);g.globalAlpha=1}}
   g.font='11px "Do Hyeon",sans-serif';g.textAlign='center';
@@ -1162,7 +1159,7 @@ async function gear(title,names,prices,key,desc){const tk=key==='w'?'w':'s';
 }
 async function run(n){if(busy||mode!=='map'||!cmds()[n])return;busy=true;try{await CMD[n]()}finally{busy=false;save();ui()}}
 async function help(){if(busy||mode!=='map')return;busy=true;
-  await msgBox('도움말','방향키/WASD: 이동 · 숫자키: 명령 · 0/Esc: 나가기 · 지도에서 Esc: 메뉴\n\n행성 배치와 종류, 지키는 세력은 게임마다 달라집니다. 약탈자를 잡아 자금과 경험을 모으고, 연구소가 있는 행성에서 기술을 개발해 무기와 방어 체계를 여십시오.\n점령한 행성은 식민지가 됩니다. 내정에서 시설을 짓고 세율을 정하면 전투를 4번 치를 때마다 한 달이 지나 수입이 들어옵니다. 충성도는 가만두면 떨어지고, 영토가 넓을수록 더 빨리 식습니다. 50% 아래면 반란이 일어날 수 있습니다. 식민지 근처(2칸 이내)에서 전투에 이기면 그 행성 충성도가 1 오릅니다.\n적 습격대가 식민지 근처에 나타나 행성이나 함대를 노립니다. 습격당한 행성은 충성도가 떨어지고 시설이 파손될 수 있으니, 방어 시설로 스스로 막아내게 하십시오.\n방어 체계는 방어력만큼 한 발의 피해를 깎습니다(최소 25%는 들어옴). 강인함은 상태이상을 떨쳐낼 확률입니다. 힘을 모으는 적은 붉게 빛나는데, 기절시키면 일격을 끊을 수 있습니다.\n지도: 노란 느낌표는 새 정보, 붉은 ✕는 본거지 호위 함대, 적 행성을 둘러싼 작은 십자 표시는 처음 들어갈 때 반드시 싸워야 하는 경비대, 돌무더기는 약탈자가 많은 소행성대, 보랏빛 칸은 적을 만나지 않는 성운, 빛나는 고리는 웜홀입니다.\n적은 일반·정예(왕관)·우두머리(붉은 해골)로 나뉩니다. 행성 결전은 보스전이라 우두머리를 쓰러뜨리면 더 강해진 모습으로 2·3페이즈가 이어집니다.\n전투에서 살아남은 전함은 경험을 쌓아 주니어→러너→엑스퍼트→마스터→그랜드마스터로 진급하며 공격력·맷집·강인함이 오릅니다.\n반란 행성은 두 달마다 반란 무리를 보내 가까운 식민지를 공격하고, 주변에 습격대가 더 자주 나타납니다. 정복하거나 진압한 행성의 충성도는 30%에서 시작합니다.\n내구도가 바닥난 적은 자폭 돌격을 해 옵니다. 우리 전함은 자폭하지 않습니다.');
+  await msgBox('도움말','방향키/WASD: 이동 · 숫자키: 명령 · 0/Esc: 나가기 · 지도에서 Esc: 메뉴\n\n행성 배치와 종류, 지키는 세력은 게임마다 달라집니다. 약탈자를 잡아 자금과 경험을 모으고, 연구소가 있는 행성에서 기술을 개발해 무기와 방어 체계를 여십시오.\n점령한 행성은 식민지가 됩니다. 내정에서 시설을 짓고 세율을 정하면 전투를 4번 치를 때마다 한 달이 지나 수입이 들어옵니다. 충성도는 가만두면 떨어지고, 영토가 넓을수록 더 빨리 식습니다. 50% 아래면 반란이 일어날 수 있습니다. 식민지 근처(2칸 이내)에서 전투에 이기면 그 행성 충성도가 1 오릅니다.\n적 습격대가 식민지 근처에 나타나 행성이나 함대를 노립니다. 습격당한 행성은 충성도가 떨어지고 시설이 파손될 수 있으니, 방어 시설로 스스로 막아내게 하십시오.\n방어 체계는 방어력만큼 한 발의 피해를 깎습니다(최소 25%는 들어옴). 강인함은 상태이상을 떨쳐낼 확률입니다. 힘을 모으는 적은 붉게 빛나는데, 기절시키면 일격을 끊을 수 있습니다.\n지도: 노란 느낌표는 새 정보, 적 행성(본거지 포함)을 둘러싼 작은 십자 표시는 처음 들어갈 때 반드시 싸워야 하는 경비대·호위 함대, 돌무더기는 약탈자가 많은 소행성대, 보랏빛 칸은 적을 만나지 않는 성운, 빛나는 고리는 웜홀입니다.\n적은 일반·정예(왕관)·우두머리(붉은 해골)로 나뉩니다. 행성 결전은 보스전이라 우두머리를 쓰러뜨리면 더 강해진 모습으로 2·3페이즈가 이어집니다.\n전투에서 살아남은 전함은 경험을 쌓아 주니어→러너→엑스퍼트→마스터→그랜드마스터로 진급하며 공격력·맷집·강인함이 오릅니다.\n반란 행성은 두 달마다 반란 무리를 보내 가까운 식민지를 공격하고, 주변에 습격대가 더 자주 나타납니다. 정복하거나 진압한 행성의 충성도는 30%에서 시작합니다.\n내구도가 바닥난 적은 자폭 돌격을 해 옵니다. 우리 전함은 자폭하지 않습니다.');
   busy=false}
 
 /* ---------- enemies ---------- */
