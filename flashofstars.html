@@ -195,7 +195,7 @@ img.sic{height:.8em;width:2.05em;image-rendering:pixelated;vertical-align:-.06em
 <main class="wrap">
   <header class="top">
     <h1>별빛 섬광</h1>
-    <p id="ver">v0.43</p>
+    <p id="ver">v0.44</p>
   </header>
 
   <div class="stage" id="stage">
@@ -414,7 +414,9 @@ function newState(){const w=genWorld();return{v:2,x:w.pl[0].x,y:w.pl[0].y,money:
   tech:{w0:true},prog:{},rsch:null,
   fleet:[ship('sung',-1,-1,1),ship('fighter',-1,-1,1),ship('fighter',-1,-1,1)],hangar:[],raids:[],pl:w.pl,tiles:w.tiles,worm:w.worm,conq:{},info:{},guard:{},joined:{},lover:false}}
 function setState(st){S=st;PL=S.pl;S.raids=S.raids||[];for(const p of PL)p.c=PT[p.type].c[p.seed%PT[p.type].c.length];for(const k in pcache)delete pcache[k];V.x=S.x;V.y=S.y;trail=[];prev={}}
-const KEY='sevenstars-v2',SETKEY='sevenstars-set';
+const KEY='flashofstars-v2',SETKEY='flashofstars-set';
+/* carry over saves written under the old storage names */
+try{for(const[o,n]of[['sevenstars-v2',KEY],['sevenstars-set',SETKEY],['sevenstars-slot1','flashofstars-slot1'],['sevenstars-slot2','flashofstars-slot2'],['sevenstars-slot3','flashofstars-slot3']]){const v=localStorage.getItem(o);if(v!==null){if(localStorage.getItem(n)===null)localStorage.setItem(n,v);localStorage.removeItem(o)}}}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{return sanitize(JSON.parse(localStorage.getItem(KEY)))}catch(e){}return null}
 let snd=true,bgm=true,spd=1;
@@ -1758,7 +1760,7 @@ $('bSpd').addEventListener('click',()=>setSpd(spd%3+1));
 $('bFull').addEventListener('click',()=>{try{if(document.fullscreenElement)document.exitFullscreen();else{const p=$('stage').requestFullscreen();if(p&&p.catch)p.catch(()=>toast('이 화면에서는 전체 화면을 쓸 수 없습니다.'))}}catch(e){toast('이 화면에서는 전체 화면을 쓸 수 없습니다.')}});
 document.addEventListener('fullscreenchange',()=>{try{const kb=navigator.keyboard;if(!kb)return;if(document.fullscreenElement){if(kb.lock)kb.lock(['Escape']).catch(()=>{})}else if(kb.unlock)kb.unlock()}catch(e){}});
 /* ---------- in-game menu: save slots, load, settings ---------- */
-const SLOTK=n=>'sevenstars-slot'+n;
+const SLOTK=n=>'flashofstars-slot'+n;
 const sumOf=st=>`${st.month}개월 · 영토 ${1+Object.keys(st.conq).length} · 전함 ${st.fleet.length}척 · 자금 ${st.money}만원`;
 function slotGet(n){try{const o=JSON.parse(localStorage.getItem(SLOTK(n)));const st=o&&sanitize(o.s);return st?{t:o.t,st}:null}catch(e){return null}}
 const when=t=>{const d=new Date(t),p=v=>String(v).padStart(2,'0');return`${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`};
@@ -1828,7 +1830,7 @@ function textBox(title,text,value){return new Promise(res=>{
 async function exportFile(){
   {save();const d=new Date(),pad=n=>String(n).padStart(2,'0');
     const fname=`별빛 섬광 ${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json`;
-    const data=JSON.stringify({game:'sevenstars',version:2,saved:d.toISOString(),state:S},null,1);
+    const data=JSON.stringify({game:'flashofstars',version:2,saved:d.toISOString(),state:S},null,1);
     const fallback='이 화면에서는 파일 저장을 쓸 수 없습니다. 아래 내용을 복사해 .json 파일로 저장하면 불러오기에 쓸 수 있습니다.';
     let dn=null;try{dn=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){}
     if(dn){try{await dn.save({filename:fname,data});toast('세이브 파일을 저장했습니다.')}
